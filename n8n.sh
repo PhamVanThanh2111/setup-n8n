@@ -790,17 +790,47 @@ install_n8n() {
     # --- Install Cloudflared ---
     if ! command -v cloudflared &> /dev/null; then
         echo ">>> Cloudflared not found. Installing Cloudflared..."
-        # Download the ARM64 package
-        CLOUDFLARED_DEB_URL="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64.deb"
-        CLOUDFLARED_DEB_PATH="/tmp/cloudflared-linux-arm64.deb"
-        echo ">>> Downloading Cloudflared package from $CLOUDFLARED_DEB_URL..."
+    
+        # Automatically determine the system architecture
+        ARCH=$(dpkg --print-architecture)
+        echo ">>> Detected system architecture: $ARCH"
+    
+        local CLOUDFLARED_DEB_URL
+        local CLOUDFLARED_DEB_PATH="/tmp/cloudflared-linux-$ARCH.deb" # Use detected arch in filename
+    
+        case "$ARCH" in
+            amd64)
+                CLOUDFLARED_DEB_URL="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb"
+                ;;
+            arm64|armhf) # armhf for older 32-bit ARM, arm64 for 64-bit ARM
+                CLOUDFLARED_DEB_URL="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-$ARCH.deb"
+                ;;
+            *)
+                print_error "Unsupported architecture: $ARCH. Cannot install Cloudflared automatically."
+                exit 1
+                ;;
+        esac
+    
+        echo ">>> Downloading Cloudflared package for $ARCH from $CLOUDFLARED_DEB_URL..."
         wget -q "$CLOUDFLARED_DEB_URL" -O "$CLOUDFLARED_DEB_PATH"
+    
+        if [ $? -ne 0 ]; then
+            print_error "Failed to download Cloudflared package."
+            exit 1
+        fi
+    
         echo ">>> Installing Cloudflared package..."
         dpkg -i "$CLOUDFLARED_DEB_PATH"
+    
+        if [ $? -ne 0 ]; then
+            print_error "Failed to install Cloudflared. Please check logs for details."
+            exit 1
+        fi
+    
         rm "$CLOUDFLARED_DEB_PATH" # Clean up downloaded file
-        echo ">>> Cloudflared installed successfully."
+        print_success "Cloudflared installed successfully."
     else
-        echo ">>> Cloudflared is already installed."
+        print_success "Cloudflared is already installed."
     fi
 
     # --- Setup n8n Directory and Permissions ---
