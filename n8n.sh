@@ -282,7 +282,7 @@ manage_config() {
         echo "4.  To config mi"
         echo "0.  Quay li"
         echo ""
-        read -p "Nhp la chn (0-4): " config_choice
+        read -p "Nhp la chn [0-4]: " config_choice
         
         case $config_choice in
             1)
@@ -1599,7 +1599,7 @@ show_menu() {
     echo "11. Go cai dat N8N hoan toan"
     echo "0. Thoat"
     echo ""
-    read -p "Nhap lua chon (0-11): " choice
+    read -p "Nhap lua chon [0-11]: " choice
 }
 
 # === Main Script Logic ===
