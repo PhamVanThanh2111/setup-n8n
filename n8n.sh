@@ -137,15 +137,15 @@ get_cloudflare_info() {
     echo "3️⃣ Tạo tunnel mới hoặc chọn tunnel có sẵn:"
     echo "   • Click 'Create a tunnel'"
     echo "   • Chọn 'Cloudflared' connector"
-    echo "   • Đặt tên tunnel (ví dụ: n8n-tunnel)"
+    echo "   • Đặt tên tunnel (ví dụ: n8n-tunnel"
     echo ""
     echo "4️⃣ Lấy thông tin cần thiết:"
     echo "   🔑 Token: Trong phần 'Install and run a connector'"
-    echo "   🌐 Hostname: Domain bạn muốn sử dụng (ví dụ: n8n.yourdomain.com)"
+    echo "   🌐 Hostname: Domain bạn muốn sử dụng (ví dụ: n8n.yourdomain.com"
     echo ""
     echo "5️⃣ Cấu hình DNS:"
     echo "   • Trong Cloudflare DNS, tạo CNAME record"
-    echo "   • Name: subdomain của bạn (ví dụ: n8n)"
+    echo "   • Name: subdomain của bạn (ví dụ: n8n"
     echo "   • Target: [tunnel-id].cfargotunnel.com"
     echo ""
     echo "💡 Lưu ý:"
@@ -377,7 +377,7 @@ edit_config() {
         
         # Kiểm tra xem có phải local mode không
         if [ "$CF_HOSTNAME" = "localhost" ]; then
-            echo "  📝 Mode: Local (không cần Cloudflare)"
+            echo "  📝 Mode: Local (không cần Cloudflare"
             echo ""
             print_warning "⚠️  Bạn đang ở chế độ Local Mode"
             echo "Để chuyển sang Cloudflare Mode, vui lòng tạo config mới"
@@ -501,7 +501,7 @@ check_container_health() {
                 return 1
                 ;;
             "starting")
-                echo "⏳ Container đang khởi động... ($wait_time/${max_wait}s)"
+                echo "⏳ Container đang khởi động... ($wait_time/${max_wait}s"
                 ;;
             "no-healthcheck")
                 # Fallback: kiểm tra container có đang chạy không
@@ -737,8 +737,8 @@ show_server_status() {
     echo -e "${YELLOW}Thời gian: $(date)${NC}"
     
     echo "System Info:"
-    echo "  - Uptime: $(uptime -p)"
-    echo "  - Load: $(uptime | awk -F'load average:' '{print $2}')"
+    echo "  - Uptime: $(uptime -p"
+    echo "  - Load: $(uptime | awk -F'load average:' '{print $2}'"
     echo "  - Memory: $(free -h | awk 'NR==2{printf "%.1f%% (%s/%s)", $3*100/$2, $3, $2}')"
     echo "  - Disk: $(df -h / | awk 'NR==2{printf "%s (%s used)", $5, $3}')"
     echo ""
@@ -773,7 +773,7 @@ count_backups() {
             echo ""
             
             echo "📄 Chi tiết nội dung backup:"
-            echo "  ✓ N8N workflows và database (SQLite)"
+            echo "  ✓ N8N workflows và database (SQLite"
             echo "  ✓ N8N settings và configurations"
             echo "  ✓ Custom nodes và packages"
             echo "  ✓ Cloudflared tunnel configurations"
@@ -798,7 +798,7 @@ create_backup() {
     
     BACKUP_FILE="n8n_backup_${TIMESTAMP}.tar.gz"
     echo "📦 Backup file: $BACKUP_FILE"
-    echo "⏰ Thời gian backup: $(date)"
+    echo "⏰ Thời gian backup: $(date"
     
     # Dừng container để backup an toàn
     if [ -f "$DOCKER_COMPOSE_FILE" ]; then
@@ -969,7 +969,7 @@ scan_installation() {
     # Kiểm tra Docker
     echo "🔍 Kiểm tra Docker..."
     if command -v docker &> /dev/null; then
-        echo "  ✅ Docker: $(docker --version)"
+        echo "  ✅ Docker: $(docker --version"
         ((found_items++))
     else
         echo "  ❌ Docker: Không tìm thấy"
@@ -978,7 +978,7 @@ scan_installation() {
     # Kiểm tra Docker Compose
     echo "🔍 Kiểm tra Docker Compose..."
     if docker compose version &> /dev/null 2>&1; then
-        echo "  ✅ Docker Compose: $(docker compose version 2>/dev/null | head -1)"
+        echo "  ✅ Docker Compose: $(docker compose version 2>/dev/null | head -1"
         ((found_items++))
     else
         echo "  ❌ Docker Compose: Không tìm thấy"
@@ -1016,7 +1016,7 @@ scan_installation() {
     # Kiểm tra Cloudflared
     echo "🔍 Kiểm tra Cloudflared..."
     if command -v cloudflared &> /dev/null; then
-        echo "  ✅ Cloudflared: $(cloudflared --version 2>/dev/null | head -1)"
+        echo "  ✅ Cloudflared: $(cloudflared --version 2>/dev/null | head -1"
         ((found_items++))
     else
         echo "  ❌ Cloudflared: Không tìm thấy"
@@ -1036,7 +1036,7 @@ scan_installation() {
     echo "🔍 Kiểm tra N8N data directory..."
     if [ -d "$N8N_BASE_DIR" ]; then
         local size=$(du -sh "$N8N_BASE_DIR" 2>/dev/null | cut -f1)
-        echo "  ✅ N8N directory: $N8N_BASE_DIR ($size)"
+        echo "  ✅ N8N directory: $N8N_BASE_DIR ($size"
         ((found_items++))
     else
         echo "  ❌ N8N directory: Không tìm thấy"
@@ -1047,7 +1047,7 @@ scan_installation() {
     if [ -d "$BACKUP_DIR" ]; then
         local backup_count=$(ls -1 "$BACKUP_DIR"/*.tar.gz 2>/dev/null | wc -l)
         local backup_size=$(du -sh "$BACKUP_DIR" 2>/dev/null | cut -f1)
-        echo "  ✅ Backup directory: $BACKUP_DIR ($backup_count backups, $backup_size)"
+        echo "  ✅ Backup directory: $BACKUP_DIR ($backup_count backups, $backup_size"
         ((found_items++))
     else
         echo "  ❌ Backup directory: Không tìm thấy"
@@ -1094,7 +1094,7 @@ uninstall_n8n() {
     echo "  • Xóa N8N network"
     echo "  • Dừng Cloudflared service"
     echo "  • Xóa Cloudflared config"
-    echo "  • Xóa N8N data directory (workflows, database, etc.)"
+    echo "  • Xóa N8N data directory (workflows, database, etc."
     echo "  • Xóa config files"
     echo ""
     print_warning "⚠️  Backup sẽ được GIỮ LẠI trong: $BACKUP_DIR"
@@ -1116,7 +1116,7 @@ uninstall_n8n() {
         docker compose -f "$DOCKER_COMPOSE_FILE" down 2>/dev/null || true
         print_success "N8N container đã dừng"
     else
-        echo "   (N8N container không chạy)"
+        echo "   (N8N container không chạy"
     fi
     
     # 2. Xóa N8N container
@@ -1125,7 +1125,7 @@ uninstall_n8n() {
         docker rm -f n8n 2>/dev/null || true
         print_success "N8N container đã xóa"
     else
-        echo "   (N8N container không tồn tại)"
+        echo "   (N8N container không tồn tại"
     fi
     
     # 3. Xóa N8N image
@@ -1134,7 +1134,7 @@ uninstall_n8n() {
         docker rmi -f n8nio/n8n 2>/dev/null || true
         print_success "N8N image đã xóa"
     else
-        echo "   (N8N image không tồn tại)"
+        echo "   (N8N image không tồn tại"
     fi
     
     # 4. Xóa N8N network
@@ -1143,7 +1143,7 @@ uninstall_n8n() {
         docker network rm n8n-network 2>/dev/null || true
         print_success "N8N network đã xóa"
     else
-        echo "   (N8N network không tồn tại)"
+        echo "   (N8N network không tồn tại"
     fi
     
     # 5. Dừng Cloudflared service
@@ -1153,7 +1153,7 @@ uninstall_n8n() {
         systemctl disable cloudflared 2>/dev/null || true
         print_success "Cloudflared service đã dừng"
     else
-        echo "   (Cloudflared service không chạy)"
+        echo "   (Cloudflared service không chạy"
     fi
     
     # 6. Xóa Cloudflared config
@@ -1162,7 +1162,7 @@ uninstall_n8n() {
         rm -f "$CLOUDFLARED_CONFIG_FILE" 2>/dev/null || true
         print_success "Cloudflared config đã xóa"
     else
-        echo "   (Cloudflared config không tồn tại)"
+        echo "   (Cloudflared config không tồn tại"
     fi
     
     # 7. Xóa N8N data directory
@@ -1171,7 +1171,7 @@ uninstall_n8n() {
         rm -rf "$N8N_BASE_DIR" 2>/dev/null || true
         print_success "N8N data directory đã xóa"
     else
-        echo "   (N8N data directory không tồn tại)"
+        echo "   (N8N data directory không tồn tại"
     fi
     
     # 8. Xóa config file
@@ -1180,7 +1180,7 @@ uninstall_n8n() {
         rm -f "$CONFIG_FILE" 2>/dev/null || true
         print_success "Config file đã xóa"
     else
-        echo "   (Config file không tồn tại)"
+        echo "   (Config file không tồn tại"
     fi
     
     echo ""
@@ -1543,15 +1543,15 @@ EOF
         echo ""
         echo "2️⃣ Tạo DNS Record:"
         echo "   • Type: CNAME"
-        echo "   • Name: $(echo ${CF_HOSTNAME} | cut -d'.' -f1)"
+        echo "   • Name: $(echo ${CF_HOSTNAME} | cut -d'.' -f1"
         echo "   • Target: [tunnel-id].cfargotunnel.com"
-        echo "   • Proxy: Proxied (màu cam)"
+        echo "   • Proxy: Proxied (màu cam"
         echo ""
         echo "3️⃣ Cấu hình Public Hostname trong Tunnel:"
         echo "   • Access → Tunnels → Chọn tunnel"
         echo "   • Public Hostname → Add a public hostname"
-        echo "   • Subdomain: $(echo ${CF_HOSTNAME} | cut -d'.' -f1)"
-        echo "   • Domain: $(echo ${CF_HOSTNAME} | cut -d'.' -f2-)"
+        echo "   • Subdomain: $(echo ${CF_HOSTNAME} | cut -d'.' -f1"
+        echo "   • Domain: $(echo ${CF_HOSTNAME} | cut -d'.' -f2-"
         echo "   • Service: http://localhost:5678"
         echo ""
         echo "� Hướn g dẫn chi tiết: Xem file CLOUDFLARE_DNS_SETUP.md"
@@ -1586,7 +1586,7 @@ show_menu() {
     echo -e "${BLUE}================================================${NC}"
     echo ""
     echo "Chọn hành động:"
-    echo "1. 🚀 Cài đặt N8N mới (với Cloudflare Tunnel)"
+    echo "1. 🚀 Cài đặt N8N mới (với Cloudflare Tunnel"
     echo "2. 💾 Backup dữ liệu N8N"
     echo "3. 🔄 Update N8N lên phiên bản mới nhất"
     echo "4. 🔄💾 Backup + Update N8N"
