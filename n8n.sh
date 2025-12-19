@@ -159,6 +159,31 @@ get_cloudflare_info() {
 
 get_new_config() {
     echo ""
+    read -p "❓ Bạn muốn sử dụng Cloudflare Tunnel không? (y/N): " use_cloudflare
+    
+    if [ "$use_cloudflare" != "y" ] && [ "$use_cloudflare" != "Y" ]; then
+        # Local mode - không cần Cloudflare
+        print_success "Chế độ Local được chọn"
+        echo ""
+        echo "📝 Thông tin cấu hình Local Mode:"
+        echo "  • N8N sẽ chạy tại: http://localhost:5678"
+        echo "  • Chỉ có thể truy cập từ máy local"
+        echo "  • Không cần token Cloudflare"
+        echo "  • Không cần cấu hình DNS"
+        echo ""
+        
+        CF_TOKEN="local"
+        CF_HOSTNAME="localhost"
+        TUNNEL_ID="local"
+        ACCOUNT_TAG="local"
+        TUNNEL_SECRET="local"
+        
+        save_config "$CF_TOKEN" "$CF_HOSTNAME" "$TUNNEL_ID" "$ACCOUNT_TAG" "$TUNNEL_SECRET"
+        print_success "Config Local Mode đã được lưu"
+        return 0
+    fi
+    
+    # Cloudflare mode
     read -p "❓ Bạn có cần xem hướng dẫn lấy thông tin Cloudflare không? (y/N): " show_guide
     
     if [ "$show_guide" = "y" ] || [ "$show_guide" = "Y" ]; then
@@ -349,6 +374,17 @@ edit_config() {
     if load_config; then
         echo "Config hiện tại:"
         echo "  🌐 Hostname: $CF_HOSTNAME"
+        
+        # Kiểm tra xem có phải local mode không
+        if [ "$CF_HOSTNAME" = "localhost" ]; then
+            echo "  📝 Mode: Local (không cần Cloudflare)"
+            echo ""
+            print_warning "⚠️  Bạn đang ở chế độ Local Mode"
+            echo "Để chuyển sang Cloudflare Mode, vui lòng tạo config mới"
+            echo ""
+            return 0
+        fi
+        
         echo "  🔑 Token: ${CF_TOKEN:0:20}...${CF_TOKEN: -10}"
         echo ""
         
@@ -562,6 +598,11 @@ health_check() {
     local max_attempts=6
     local attempt=1
     
+    # Load config để biết mode hiện tại
+    if ! load_config; then
+        print_warning "Không thể đọc config, sẽ kiểm tra container..."
+    fi
+    
     while [ $attempt -le $max_attempts ]; do
         echo "🔍 Thử kết nối lần $attempt/$max_attempts..."
         
@@ -574,10 +615,12 @@ health_check() {
         # Kiểm tra port 5678
         if curl -s -o /dev/null -w "%{http_code}" http://localhost:5678 | grep -q "200\|302\|401"; then
             print_success "N8N service đang hoạt động bình thường"
-            if [ -n "$CF_HOSTNAME" ]; then
-                print_success "Truy cập: https://$CF_HOSTNAME"
+            
+            # Hiển thị URL dựa trên mode
+            if [ "$CF_HOSTNAME" = "localhost" ]; then
+                print_success "📍 Truy cập (Local Mode): http://localhost:5678"
             else
-                print_success "Truy cập: http://localhost:5678"
+                print_success "📍 Truy cập (Cloudflare Mode): https://$CF_HOSTNAME"
             fi
             return 0
         fi
@@ -886,6 +929,279 @@ backup_and_update() {
     print_success "Truy cập: https://${CF_HOSTNAME:-localhost:5678}"
 }
 
+# === Uninstall Functions ===
+create_manifest() {
+    local manifest_file="$N8N_BASE_DIR/.n8n_manifest"
+    
+    cat > "$manifest_file" << EOF
+# N8N Installation Manifest
+# Generated on: $(date)
+# This file tracks what was installed for uninstall purposes
+
+INSTALL_DATE="$(date)"
+N8N_BASE_DIR="$N8N_BASE_DIR"
+N8N_VOLUME_DIR="$N8N_VOLUME_DIR"
+BACKUP_DIR="$BACKUP_DIR"
+CONFIG_FILE="$CONFIG_FILE"
+DOCKER_COMPOSE_FILE="$DOCKER_COMPOSE_FILE"
+CLOUDFLARED_CONFIG_FILE="$CLOUDFLARED_CONFIG_FILE"
+
+# Installed components
+DOCKER_INSTALLED="yes"
+CLOUDFLARED_INSTALLED="yes"
+N8N_CONTAINER_CREATED="yes"
+CLOUDFLARED_SERVICE_CREATED="yes"
+
+# Backup location
+MANIFEST_FILE="$manifest_file"
+EOF
+    
+    chmod 600 "$manifest_file"
+    print_success "Manifest created: $manifest_file"
+}
+
+scan_installation() {
+    print_section "Quét VPS để tìm các thành phần N8N"
+    echo ""
+    
+    local found_items=0
+    
+    # Kiểm tra Docker
+    echo "🔍 Kiểm tra Docker..."
+    if command -v docker &> /dev/null; then
+        echo "  ✅ Docker: $(docker --version)"
+        ((found_items++))
+    else
+        echo "  ❌ Docker: Không tìm thấy"
+    fi
+    
+    # Kiểm tra Docker Compose
+    echo "🔍 Kiểm tra Docker Compose..."
+    if docker compose version &> /dev/null 2>&1; then
+        echo "  ✅ Docker Compose: $(docker compose version 2>/dev/null | head -1)"
+        ((found_items++))
+    else
+        echo "  ❌ Docker Compose: Không tìm thấy"
+    fi
+    
+    # Kiểm tra N8N container
+    echo "🔍 Kiểm tra N8N container..."
+    if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q "^n8n$"; then
+        local status=$(docker ps --format '{{.Status}}' --filter "name=^n8n$" 2>/dev/null || echo "stopped")
+        echo "  ✅ N8N container: $status"
+        ((found_items++))
+    else
+        echo "  ❌ N8N container: Không tìm thấy"
+    fi
+    
+    # Kiểm tra N8N image
+    echo "🔍 Kiểm tra N8N image..."
+    if docker images --format '{{.Repository}}' 2>/dev/null | grep -q "n8nio/n8n"; then
+        local image_id=$(docker images --format '{{.ID}}' --filter "reference=n8nio/n8n" 2>/dev/null | head -1)
+        echo "  ✅ N8N image: $image_id"
+        ((found_items++))
+    else
+        echo "  ❌ N8N image: Không tìm thấy"
+    fi
+    
+    # Kiểm tra N8N network
+    echo "🔍 Kiểm tra N8N network..."
+    if docker network ls --format '{{.Name}}' 2>/dev/null | grep -q "n8n-network"; then
+        echo "  ✅ N8N network: n8n-network"
+        ((found_items++))
+    else
+        echo "  ❌ N8N network: Không tìm thấy"
+    fi
+    
+    # Kiểm tra Cloudflared
+    echo "🔍 Kiểm tra Cloudflared..."
+    if command -v cloudflared &> /dev/null; then
+        echo "  ✅ Cloudflared: $(cloudflared --version 2>/dev/null | head -1)"
+        ((found_items++))
+    else
+        echo "  ❌ Cloudflared: Không tìm thấy"
+    fi
+    
+    # Kiểm tra Cloudflared service
+    echo "🔍 Kiểm tra Cloudflared service..."
+    if systemctl is-enabled cloudflared &> /dev/null 2>&1; then
+        local cf_status=$(systemctl is-active cloudflared 2>/dev/null || echo "unknown")
+        echo "  ✅ Cloudflared service: $cf_status"
+        ((found_items++))
+    else
+        echo "  ❌ Cloudflared service: Không tìm thấy"
+    fi
+    
+    # Kiểm tra N8N data directory
+    echo "🔍 Kiểm tra N8N data directory..."
+    if [ -d "$N8N_BASE_DIR" ]; then
+        local size=$(du -sh "$N8N_BASE_DIR" 2>/dev/null | cut -f1)
+        echo "  ✅ N8N directory: $N8N_BASE_DIR ($size)"
+        ((found_items++))
+    else
+        echo "  ❌ N8N directory: Không tìm thấy"
+    fi
+    
+    # Kiểm tra Backup directory
+    echo "🔍 Kiểm tra Backup directory..."
+    if [ -d "$BACKUP_DIR" ]; then
+        local backup_count=$(ls -1 "$BACKUP_DIR"/*.tar.gz 2>/dev/null | wc -l)
+        local backup_size=$(du -sh "$BACKUP_DIR" 2>/dev/null | cut -f1)
+        echo "  ✅ Backup directory: $BACKUP_DIR ($backup_count backups, $backup_size)"
+        ((found_items++))
+    else
+        echo "  ❌ Backup directory: Không tìm thấy"
+    fi
+    
+    # Kiểm tra Cloudflared config
+    echo "🔍 Kiểm tra Cloudflared config..."
+    if [ -f "$CLOUDFLARED_CONFIG_FILE" ]; then
+        echo "  ✅ Cloudflared config: $CLOUDFLARED_CONFIG_FILE"
+        ((found_items++))
+    else
+        echo "  ❌ Cloudflared config: Không tìm thấy"
+    fi
+    
+    # Kiểm tra Config file
+    echo "🔍 Kiểm tra Config file..."
+    if [ -f "$CONFIG_FILE" ]; then
+        echo "  ✅ Config file: $CONFIG_FILE"
+        ((found_items++))
+    else
+        echo "  ❌ Config file: Không tìm thấy"
+    fi
+    
+    echo ""
+    echo "📊 Tổng cộng tìm thấy: $found_items thành phần"
+    echo ""
+    
+    return 0
+}
+
+uninstall_n8n() {
+    print_section "Gỡ cài đặt N8N"
+    echo ""
+    
+    # Scan trước
+    scan_installation
+    echo ""
+    
+    # Xác nhận
+    print_warning "⚠️  CẢNH BÁO: Quá trình gỡ cài sẽ:"
+    echo "  • Dừng N8N container"
+    echo "  • Xóa N8N container"
+    echo "  • Xóa N8N image"
+    echo "  • Xóa N8N network"
+    echo "  • Dừng Cloudflared service"
+    echo "  • Xóa Cloudflared config"
+    echo "  • Xóa N8N data directory (workflows, database, etc.)"
+    echo "  • Xóa config files"
+    echo ""
+    print_warning "⚠️  Backup sẽ được GIỮ LẠI trong: $BACKUP_DIR"
+    echo ""
+    
+    read -p "Bạn có chắc chắn muốn gỡ cài N8N? (y/N): " confirm
+    if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
+        echo "Hủy gỡ cài"
+        return 0
+    fi
+    
+    echo ""
+    print_section "Bắt đầu gỡ cài..."
+    echo ""
+    
+    # 1. Dừng N8N container
+    echo "1️⃣ Dừng N8N container..."
+    if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "^n8n$"; then
+        docker compose -f "$DOCKER_COMPOSE_FILE" down 2>/dev/null || true
+        print_success "N8N container đã dừng"
+    else
+        echo "   (N8N container không chạy)"
+    fi
+    
+    # 2. Xóa N8N container
+    echo "2️⃣ Xóa N8N container..."
+    if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q "^n8n$"; then
+        docker rm -f n8n 2>/dev/null || true
+        print_success "N8N container đã xóa"
+    else
+        echo "   (N8N container không tồn tại)"
+    fi
+    
+    # 3. Xóa N8N image
+    echo "3️⃣ Xóa N8N image..."
+    if docker images --format '{{.Repository}}' 2>/dev/null | grep -q "n8nio/n8n"; then
+        docker rmi -f n8nio/n8n 2>/dev/null || true
+        print_success "N8N image đã xóa"
+    else
+        echo "   (N8N image không tồn tại)"
+    fi
+    
+    # 4. Xóa N8N network
+    echo "4️⃣ Xóa N8N network..."
+    if docker network ls --format '{{.Name}}' 2>/dev/null | grep -q "n8n-network"; then
+        docker network rm n8n-network 2>/dev/null || true
+        print_success "N8N network đã xóa"
+    else
+        echo "   (N8N network không tồn tại)"
+    fi
+    
+    # 5. Dừng Cloudflared service
+    echo "5️⃣ Dừng Cloudflared service..."
+    if systemctl is-active cloudflared &> /dev/null 2>&1; then
+        systemctl stop cloudflared 2>/dev/null || true
+        systemctl disable cloudflared 2>/dev/null || true
+        print_success "Cloudflared service đã dừng"
+    else
+        echo "   (Cloudflared service không chạy)"
+    fi
+    
+    # 6. Xóa Cloudflared config
+    echo "6️⃣ Xóa Cloudflared config..."
+    if [ -f "$CLOUDFLARED_CONFIG_FILE" ]; then
+        rm -f "$CLOUDFLARED_CONFIG_FILE" 2>/dev/null || true
+        print_success "Cloudflared config đã xóa"
+    else
+        echo "   (Cloudflared config không tồn tại)"
+    fi
+    
+    # 7. Xóa N8N data directory
+    echo "7️⃣ Xóa N8N data directory..."
+    if [ -d "$N8N_BASE_DIR" ]; then
+        rm -rf "$N8N_BASE_DIR" 2>/dev/null || true
+        print_success "N8N data directory đã xóa"
+    else
+        echo "   (N8N data directory không tồn tại)"
+    fi
+    
+    # 8. Xóa config file
+    echo "8️⃣ Xóa config file..."
+    if [ -f "$CONFIG_FILE" ]; then
+        rm -f "$CONFIG_FILE" 2>/dev/null || true
+        print_success "Config file đã xóa"
+    else
+        echo "   (Config file không tồn tại)"
+    fi
+    
+    echo ""
+    print_section "Gỡ cài hoàn thành!"
+    echo ""
+    echo "✅ Các thành phần đã được gỡ cài:"
+    echo "  • N8N container"
+    echo "  • N8N image"
+    echo "  • N8N network"
+    echo "  • N8N data directory"
+    echo "  • Cloudflared service"
+    echo "  • Cloudflared config"
+    echo "  • Config files"
+    echo ""
+    echo "📦 Backup được giữ lại tại: $BACKUP_DIR"
+    echo ""
+    echo "💡 Để xóa hoàn toàn backup:"
+    echo "   rm -rf $BACKUP_DIR"
+    echo ""
+}
+
 # === Original Installation Functions ===
 install_n8n() {
     echo -e "${BLUE}================================================${NC}"
@@ -921,7 +1237,19 @@ install_n8n() {
     apt install -y apt-transport-https ca-certificates curl software-properties-common gnupg lsb-release wget
 
     # --- Install Docker ---
-    if ! command -v docker &> /dev/null; then
+    if command -v docker &> /dev/null; then
+        print_success "Docker đã được cài đặt: $(docker --version)"
+        
+        # Kiểm tra Docker service
+        if ! systemctl is-active docker &> /dev/null; then
+            echo ">>> Docker service không chạy, khởi động..."
+            systemctl start docker
+            systemctl enable docker
+            print_success "Docker service đã được khởi động"
+        else
+            print_success "Docker service đang chạy"
+        fi
+    else
         echo ">>> Docker not found. Installing Docker..."
         # Add Docker's official GPG key:
         install -m 0755 -d /etc/apt/keyrings
@@ -937,7 +1265,12 @@ install_n8n() {
 
         # Install Docker packages
         apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-        echo ">>> Docker installed successfully."
+        print_success "Docker installed successfully: $(docker --version)"
+
+        # Ensure Docker service is running and enabled
+        systemctl start docker
+        systemctl enable docker
+        print_success "Docker service started and enabled"
 
         # Add the current sudo user (if exists) to the docker group
         # This avoids needing sudo for every docker command AFTER logging out/in again
@@ -947,22 +1280,15 @@ install_n8n() {
           usermod -aG docker "$REAL_USER"
           echo ">>> NOTE: User '$REAL_USER' needs to log out and log back in for docker group changes to take full effect."
         fi
-
-    else
-        echo ">>> Docker is already installed."
     fi
     
     # Định nghĩa REAL_USER cho tất cả trường hợp (sau khi cài đặt hoặc đã có sẵn)
     REAL_USER="${SUDO_USER:-$(whoami)}"
 
-    # Ensure Docker service is running and enabled
-    echo ">>> Ensuring Docker service is running and enabled..."
-    systemctl start docker
-    systemctl enable docker
-    echo ">>> Docker service check complete."
-
     # --- Install Cloudflared ---
-    if ! command -v cloudflared &> /dev/null; then
+    if command -v cloudflared &> /dev/null; then
+        print_success "Cloudflared đã được cài đặt: $(cloudflared --version 2>/dev/null | head -1)"
+    else
         echo ">>> Cloudflared not found. Installing Cloudflared..."
     
         # Automatically determine the system architecture
@@ -1002,9 +1328,7 @@ install_n8n() {
         fi
     
         rm "$CLOUDFLARED_DEB_PATH" # Clean up downloaded file
-        print_success "Cloudflared installed successfully."
-    else
-        print_success "Cloudflared is already installed."
+        print_success "Cloudflared installed successfully: $(cloudflared --version 2>/dev/null | head -1)"
     fi
 
     # --- Setup n8n Directory and Permissions ---
@@ -1042,10 +1366,31 @@ install_n8n() {
         print_warning "⚠️  QUAN TRỌNG: Backup file này để có thể restore credentials sau này!"
     fi
     
+    # --- Check if N8N container already exists ---
+    if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q "^n8n$"; then
+        print_warning "⚠️  N8N container đã tồn tại!"
+        read -p "Bạn có muốn khởi động lại container không? (y/N): " restart_container
+        if [ "$restart_container" = "y" ] || [ "$restart_container" = "Y" ]; then
+            docker compose -f "$DOCKER_COMPOSE_FILE" up -d 2>/dev/null || true
+            print_success "N8N container đã được khởi động"
+            health_check
+            exit 0
+        fi
+    fi
+    
     # --- Create Docker Compose File ---
     echo ">>> Creating Docker Compose file: $DOCKER_COMPOSE_FILE"
     # Determine Timezone
     SYSTEM_TZ=$(cat /etc/timezone 2>/dev/null || echo "$DEFAULT_TZ")
+    
+    # Determine port binding based on mode
+    if [ "$CF_HOSTNAME" = "localhost" ]; then
+        PORT_BINDING="127.0.0.1:5678:5678"
+        PORT_COMMENT="# Local mode - bind to localhost only"
+    else
+        PORT_BINDING="127.0.0.1:5678:5678"
+        PORT_COMMENT="# Cloudflare mode - bind to localhost, Cloudflared handles external access"
+    fi
     
     cat <<EOF > "$DOCKER_COMPOSE_FILE"
 services:
@@ -1054,16 +1399,25 @@ services:
     container_name: n8n
     restart: unless-stopped
     ports:
-      # Bind only to localhost, as Cloudflared will handle external access
-      - "127.0.0.1:5678:5678"
+      $PORT_COMMENT
+      - "$PORT_BINDING"
     environment:
       # Use system timezone if available, otherwise default
       - TZ=${SYSTEM_TZ}
       # CRITICAL: Encryption key for credentials - DO NOT CHANGE after first run
       - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+EOF
+    
+    # Add Cloudflare-specific settings only if not in local mode
+    if [ "$CF_HOSTNAME" != "localhost" ]; then
+        cat <<EOF >> "$DOCKER_COMPOSE_FILE"
       # Security settings for HTTPS access via Cloudflare
       - N8N_HOST=${CF_HOSTNAME}
       - WEBHOOK_URL=https://${CF_HOSTNAME}/
+EOF
+    fi
+    
+    cat <<EOF >> "$DOCKER_COMPOSE_FILE"
       # Performance and security optimizations
       - N8N_METRICS=false
       - N8N_DIAGNOSTICS_ENABLED=false
@@ -1089,14 +1443,15 @@ EOF
     print_success "Docker Compose file created with security enhancements"
     print_success "Encryption key saved to: $N8N_BASE_DIR/.n8n_encryption_key"
 
-    # --- Configure Cloudflared Service ---
-    echo ">>> Configuring Cloudflared..."
-    # Create directory if it doesn't exist
-    mkdir -p /etc/cloudflared
+    # --- Configure Cloudflared Service (skip if local mode) ---
+    if [ "$CF_HOSTNAME" != "localhost" ]; then
+        echo ">>> Configuring Cloudflared..."
+        # Create directory if it doesn't exist
+        mkdir -p /etc/cloudflared
 
-    # Create cloudflared config.yml
-    echo ">>> Creating Cloudflared config file: $CLOUDFLARED_CONFIG_FILE"
-    cat <<EOF > "$CLOUDFLARED_CONFIG_FILE"
+        # Create cloudflared config.yml
+        echo ">>> Creating Cloudflared config file: $CLOUDFLARED_CONFIG_FILE"
+        cat <<EOF > "$CLOUDFLARED_CONFIG_FILE"
 # This file is configured for tunnel runs via 'cloudflared service install'
 # It defines the ingress rules. Tunnel ID and credentials file are managed
 # automatically by the service install command using the provided token.
@@ -1107,18 +1462,34 @@ ingress:
     service: http://localhost:5678 # Points to n8n running locally via Docker port mapping
   - service: http_status:404 # Catch-all rule
 EOF
-    echo ">>> Cloudflared config file created."
+        echo ">>> Cloudflared config file created."
 
-    # Install cloudflared as a service using the token
-    echo ">>> Installing Cloudflared service using the provided token..."
-    # The service install command handles storing the token securely
-    cloudflared service install "$CF_TOKEN"
-    echo ">>> Cloudflared service installed."
+        # --- Check if Cloudflared service already exists ---
+        if systemctl is-enabled cloudflared &> /dev/null 2>&1; then
+            print_warning "⚠️  Cloudflared service đã được cài đặt!"
+            local cf_status=$(systemctl is-active cloudflared 2>/dev/null || echo "unknown")
+            print_success "Cloudflared service status: $cf_status"
+            
+            if [ "$cf_status" != "active" ]; then
+                echo ">>> Khởi động lại Cloudflared service..."
+                systemctl restart cloudflared
+                print_success "Cloudflared service đã được khởi động"
+            fi
+        else
+            # Install cloudflared as a service using the token
+            echo ">>> Installing Cloudflared service using the provided token..."
+            # The service install command handles storing the token securely
+            cloudflared service install "$CF_TOKEN"
+            print_success "Cloudflared service installed."
 
-    # --- Start Services ---
-    echo ">>> Enabling and starting Cloudflared service..."
-    systemctl enable cloudflared
-    systemctl start cloudflared
+            # --- Start Services ---
+            echo ">>> Enabling and starting Cloudflared service..."
+            systemctl enable cloudflared
+            systemctl start cloudflared
+        fi
+    else
+        print_success "Chế độ Local - Cloudflared không được cài đặt"
+    fi
 
     # Brief pause to allow service to stabilize
     sleep 5
@@ -1131,28 +1502,81 @@ EOF
     # Use -d to run in detached mode
     docker compose -f "$DOCKER_COMPOSE_FILE" up --remove-orphans -d
 
+    # --- Create Manifest ---
+    echo ">>> Creating installation manifest..."
+    create_manifest
+    
     # --- Final Instructions ---
     echo ""
     echo "--------------------------------------------------"
     echo " Setup Complete! "
     echo "--------------------------------------------------"
-    echo "n8n should now be running in Docker and accessible via Cloudflare Tunnel."
+    
+    if [ "$CF_HOSTNAME" = "localhost" ]; then
+        echo "✅ N8N đã được cài đặt ở chế độ Local Mode"
+        echo ""
+        echo "🌐 Truy cập N8N tại:"
+        echo "   http://localhost:5678"
+        echo ""
+        echo "📝 Thông tin Local Mode:"
+        echo "   • Chỉ có thể truy cập từ máy local"
+        echo "   • Không cần cấu hình Cloudflare"
+        echo "   • Không cần DNS"
+        echo "   • Hoàn hảo cho phát triển và thử nghiệm"
+        echo ""
+        echo "💡 Để chuyển sang Cloudflare Mode sau này:"
+        echo "   1. Chạy: sudo bash $0 config"
+        echo "   2. Chọn 'Tạo config mới'"
+        echo "   3. Chọn 'Có' khi được hỏi về Cloudflare Tunnel"
+        echo ""
+    else
+        echo "✅ N8N đã được cài đặt với Cloudflare Tunnel"
+        echo ""
+        echo "🌐 Truy cập N8N tại:"
+        echo "   https://${CF_HOSTNAME}"
+        echo ""
+        echo "⚠️  QUAN TRỌNG: Bạn cần cấu hình DNS trong Cloudflare Dashboard!"
+        echo ""
+        echo "📋 Các bước tiếp theo:"
+        echo ""
+        echo "1️⃣ Vào Cloudflare Dashboard: https://dash.cloudflare.com/"
+        echo ""
+        echo "2️⃣ Tạo DNS Record:"
+        echo "   • Type: CNAME"
+        echo "   • Name: $(echo ${CF_HOSTNAME} | cut -d'.' -f1)"
+        echo "   • Target: [tunnel-id].cfargotunnel.com"
+        echo "   • Proxy: Proxied (màu cam)"
+        echo ""
+        echo "3️⃣ Cấu hình Public Hostname trong Tunnel:"
+        echo "   • Access → Tunnels → Chọn tunnel"
+        echo "   • Public Hostname → Add a public hostname"
+        echo "   • Subdomain: $(echo ${CF_HOSTNAME} | cut -d'.' -f1)"
+        echo "   • Domain: $(echo ${CF_HOSTNAME} | cut -d'.' -f2-)"
+        echo "   • Service: http://localhost:5678"
+        echo ""
+        echo "� Hướn g dẫn chi tiết: Xem file CLOUDFLARE_DNS_SETUP.md"
+        echo ""
+    fi
+    echo "� Kiểm tra "trạng thái:"
+    echo "   sudo bash $0 status"
     echo ""
-    echo "Access your n8n instance at:"
-    echo "  https://${CF_HOSTNAME}"
+    echo "📋 Xem logs:"
+    echo "   docker logs n8n"
+    if [ "$CF_HOSTNAME" != "localhost" ]; then
+        echo "   sudo journalctl -u cloudflared -f"
+    fi
     echo ""
-    echo "Notes:"
-    echo "- It might take a minute or two for the Cloudflare Tunnel connection to be fully established."
-    echo "- If you encounter issues, check the n8n container logs: 'docker logs n8n'"
-    echo "- Check Cloudflared service logs: 'sudo journalctl -u cloudflared -f'"
-    echo "- Ensure DNS for ${CF_HOSTNAME} is correctly pointing to your Cloudflare Tunnel (usually handled automatically by Cloudflare)."
-    echo "- Remember to log out and log back in if user '$REAL_USER' was just added to the 'docker' group."
+    echo "🔧 Các lệnh hữu ích:"
+    echo "   • Backup N8N: sudo bash $0 backup"
+    echo "   • Update N8N: sudo bash $0 update"  
+    echo "   • Backup & Update: sudo bash $0 backup-update"
+    echo "   • Quản lý Config: sudo bash $0 config"
+    echo "   • Gỡ cài đặt: sudo bash $0 uninstall"
     echo ""
-    echo "🔧 Additional Commands:"
-    echo "- Backup N8N: $0 backup"
-    echo "- Update N8N: $0 update"  
-    echo "- Backup & Update: $0 backup-update"
-    echo "- Check Status: $0 status"
+    if [ "$REAL_USER" != "root" ]; then
+        echo "💡 Lưu ý: User '$REAL_USER' vừa được thêm vào docker group"
+        echo "   Vui lòng đăng xuất và đăng nhập lại để áp dụng thay đổi"
+    fi
     echo "--------------------------------------------------"
 }
 
@@ -1171,9 +1595,11 @@ show_menu() {
     echo "7. 🔙 Rollback từ backup"
     echo "8. 🧹 Dọn dẹp backup cũ"
     echo "9. ⚙️ Xem/Quản lý config Cloudflare"
+    echo "10. 🔍 Quét VPS để tìm thành phần N8N"
+    echo "11. 🗑️ Gỡ cài đặt N8N hoàn toàn"
     echo "0. ❌ Thoát"
     echo ""
-    read -p "Nhập lựa chọn (0-9): " choice
+    read -p "Nhập lựa chọn (0-11): " choice
 }
 
 # === Main Script Logic ===
@@ -1210,8 +1636,14 @@ if [ $# -gt 0 ]; then
         "config")
             manage_config
             ;;
+        "scan")
+            scan_installation
+            ;;
+        "uninstall")
+            uninstall_n8n
+            ;;
         *)
-            echo "Sử dụng: $0 [install|backup|update|backup-update|status|rollback|cleanup|config]"
+            echo "Sử dụng: $0 [install|backup|update|backup-update|status|rollback|cleanup|config|scan|uninstall]"
             echo ""
             echo "Ví dụ:"
             echo "  $0 install        # Cài đặt N8N mới"
@@ -1222,6 +1654,8 @@ if [ $# -gt 0 ]; then
             echo "  $0 rollback       # Rollback từ backup"
             echo "  $0 cleanup        # Dọn dẹp backup cũ"
             echo "  $0 config         # Quản lý config"
+            echo "  $0 scan           # Quét VPS để tìm thành phần N8N"
+            echo "  $0 uninstall      # Gỡ cài đặt N8N hoàn toàn"
             exit 1
             ;;
     esac
@@ -1262,6 +1696,12 @@ else
                 ;;
             9)
                 manage_config
+                ;;
+            10)
+                scan_installation
+                ;;
+            11)
+                uninstall_n8n
                 ;;
             0)
                 echo "Tạm biệt!"
