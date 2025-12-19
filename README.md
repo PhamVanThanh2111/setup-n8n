@@ -4,8 +4,8 @@
 [![Shell Script](https://img.shields.io/badge/Shell-Bash-green.svg)](https://www.gnu.org/software/bash/)
 [![N8N](https://img.shields.io/badge/N8N-2.1.1-blue.svg)](https://n8n.io/)
 [![Cloudflare](https://img.shields.io/badge/Cloudflare-Tunnel-orange.svg)](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/)
-[![Test Status](https://img.shields.io/badge/Tests-11%2F11%20Passed-brightgreen.svg)](#test-results)
-[![Production Ready](https://img.shields.io/badge/Status-Production%20Ready-success.svg)](#production-ready)
+[![Test Status](https://img.shields.io/badge/Tests-11%2F11%20Passed-brightgreen.svg)](N8N_SCRIPT_TEST_RESULTS.md)
+[![Production Ready](https://img.shields.io/badge/Status-Production%20Ready-success.svg)](#-tính-năng)
 
 > **🎯 Script tự động cài đặt, backup và quản lý N8N với Cloudflare Tunnel - Đã test kỹ lưỡng, sẵn sàng production!**
 
@@ -139,7 +139,7 @@
 
 ## 💻 Hướng dẫn cài đặt
 
-### 🐧 **Linux/macOS (Khuyến nghị)**
+### 🐧 **Linux (Khuyến nghị)**
 
 #### **Bước 1: Chuẩn bị hệ thống**
 
@@ -152,8 +152,7 @@ sudo yum install -y curl wget git
 # hoặc
 sudo dnf install -y curl wget git
 
-# macOS (cần Homebrew)
-brew install curl wget git
+
 ```
 
 #### **Bước 2: Tải và chạy script**
@@ -580,10 +579,6 @@ Xem [CREDITS.md](CREDITS.md) để biết thêm chi tiết về:
 
 ---
 
-
-
----
-
 **Cảm ơn J2TEAM Community đã cho phép chia sẻ**
 
-> 🚀 **Script production-ready với 91% test coverage - Bắt đầu automation journey ngay hôm nay!**
+> 🚀 **Script production-ready với 100% test coverage (11/11 functions) - Bắt đầu automation journey ngay hôm nay!**
