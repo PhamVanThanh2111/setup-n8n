@@ -4,7 +4,7 @@
 # N8N Management Script with Cloudflare Tunnel Integration
 # ============================================================
 # Requirements:
-#   - Ubuntu/Debian-based Linux (uses apt, dpkg)
+#   - Ubuntu/Debian-based Linux (uses apt, dpkg
 #   - Root/sudo access
 #   - Internet connection
 #   - Cloudflare account with Zero Trust access
@@ -17,19 +17,19 @@ if [ -z "$BASH_VERSION" ]; then
 fi
 
 # === Check if running as root ===
-if [ "$(id -u)" -ne 0 ]; then
+if [ "$(id -u" -ne 0 ]; then
    echo "This script must be run as root. Please use 'sudo bash $0'" >&2
    exit 1
 fi
 
 # === Determine the real user and home directory ===
-# When running with sudo, $HOME points to root's home (/root)
+# When running with sudo, $HOME points to root's home (/root
 # We need to use the original user's home directory
-REAL_USER="${SUDO_USER:-$(whoami)}"
-REAL_HOME=$(eval echo "~$REAL_USER")
+REAL_USER="${SUDO_USER:-$(whoami}"
+REAL_HOME=$(eval echo "~$REAL_USER"
 
 # === Configuration ===
-# N8N Data Directory (using real user's home, not root's)
+# N8N Data Directory (using real user's home, not root's
 N8N_BASE_DIR="$REAL_HOME/n8n"
 N8N_VOLUME_DIR="$N8N_BASE_DIR/n8n_data"
 DOCKER_COMPOSE_FILE="$N8N_BASE_DIR/docker-compose.yml"
@@ -40,7 +40,7 @@ DEFAULT_TZ="Asia/Ho_Chi_Minh"
 
 # Backup configuration
 BACKUP_DIR="$REAL_HOME/n8n-backups"
-TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+TIMESTAMP=$(date +%Y%m%d_%H%M%S
 
 # Config file for installation settings
 CONFIG_FILE="$REAL_HOME/.n8n_install_config"
@@ -61,24 +61,24 @@ set -u
 set -o pipefail
 
 # === Helper Functions ===
-print_section() {
+print_section( {
     echo -e "${BLUE}>>> $1${NC}"
 }
 
-print_success() {
+print_success( {
     echo -e "${GREEN} $1${NC}"
 }
 
-print_warning() {
+print_warning( {
     echo -e "${YELLOW} $1${NC}"
 }
 
-print_error() {
+print_error( {
     echo -e "${RED} $1${NC}"
 }
 
 # === Config Management Functions ===
-save_config() {
+save_config( {
     local cf_token="$1"
     local cf_hostname="$2"
     local tunnel_id="$3"
@@ -87,20 +87,20 @@ save_config() {
     
     cat > "$CONFIG_FILE" << EOF
 # N8N Installation Configuration
-# Generated on: $(date)
+# Generated on: $(date
 CF_TOKEN="$cf_token"
 CF_HOSTNAME="$cf_hostname"
 TUNNEL_ID="$tunnel_id"
 ACCOUNT_TAG="$account_tag"
 TUNNEL_SECRET="$tunnel_secret"
-INSTALL_DATE="$(date)"
+INSTALL_DATE="$(date"
 EOF
     
     chmod 600 "$CONFIG_FILE"  # Bo mt file config
     print_success "Config  c lu ti: $CONFIG_FILE"
 }
 
-load_config() {
+load_config( {
     if [ -f "$CONFIG_FILE" ]; then
         source "$CONFIG_FILE"
         return 0
@@ -109,7 +109,7 @@ load_config() {
     fi
 }
 
-show_config_info() {
+show_config_info( {
     if load_config; then
         echo -e "${BLUE} Thng tin config hin c:${NC}"
         echo "   Hostname: $CF_HOSTNAME"
@@ -122,7 +122,7 @@ show_config_info() {
     fi
 }
 
-get_cloudflare_info() {
+get_cloudflare_info( {
     echo -e "${BLUE}================================================${NC}"
     echo -e "${BLUE}    HNG DN LY THNG TIN CLOUDFLARE${NC}"
     echo -e "${BLUE}================================================${NC}"
@@ -137,15 +137,15 @@ get_cloudflare_info() {
     echo "3 To tunnel mi hoc chn tunnel c sn:"
     echo "    Click 'Create a tunnel'"
     echo "    Chn 'Cloudflared' connector"
-    echo "    t tn tunnel (v d: n8n-tunnel)"
+    echo "    t tn tunnel - v d: n8n-tunnel"
     echo ""
     echo "4 Ly thng tin cn thit:"
     echo "    Token: Trong phn 'Install and run a connector'"
-    echo "    Hostname: Domain bn mun s dng (v d: n8n.yourdomain.com)"
+    echo "    Hostname: Domain bn mun s dng - v d: n8n.yourdomain.com"
     echo ""
     echo "5 Cu hnh DNS:"
     echo "    Trong Cloudflare DNS, to CNAME record"
-    echo "    Name: subdomain ca bn (v d: n8n)"
+    echo "    Name: subdomain ca bn - v d: n8n"
     echo "    Target: [tunnel-id].cfargotunnel.com"
     echo ""
     echo " Lu :"
@@ -157,9 +157,9 @@ get_cloudflare_info() {
     echo ""
 }
 
-get_new_config() {
+get_new_config( {
     echo ""
-    read -p " Bn mun s dng Cloudflare Tunnel khng? (y/N): " use_cloudflare
+    read -p " Bn mun s dng Cloudflare Tunnel khng? (y/N: " use_cloudflare
     
     if [ "$use_cloudflare" != "y" ] && [ "$use_cloudflare" != "Y" ]; then
         # Local mode - khng cn Cloudflare
@@ -184,7 +184,7 @@ get_new_config() {
     fi
     
     # Cloudflare mode
-    read -p " Bn c cn xem hng dn ly thng tin Cloudflare khng? (y/N): " show_guide
+    read -p " Bn c cn xem hng dn ly thng tin Cloudflare khng? (y/N: " show_guide
     
     if [ "$show_guide" = "y" ] || [ "$show_guide" = "Y" ]; then
         get_cloudflare_info
@@ -197,7 +197,7 @@ get_new_config() {
     
     # Ly Cloudflare Token
     while true; do
-        read -p " Nhp Cloudflare Tunnel Token (hoc dng lnh cloudflared): " CF_TOKEN
+        read -p " Nhp Cloudflare Tunnel Token (hoc dng lnh cloudflared: " CF_TOKEN
         if [ -z "$CF_TOKEN" ]; then
             print_error "Token khng c  trng!"
             continue
@@ -207,15 +207,15 @@ get_new_config() {
         # Hoc: cloudflared service install TOKEN
         if [[ "$CF_TOKEN" =~ cloudflared ]]; then
             # Trch xut token t dng lnh
-            CF_TOKEN=$(echo "$CF_TOKEN" | grep -oP 'service install \K.*' | tr -d ' ')
+            CF_TOKEN=$(echo "$CF_TOKEN" | grep -oP 'service install \K.*' | tr -d ' '
             if [ -z "$CF_TOKEN" ]; then
                 print_error "Khng th trch xut token t dng lnh. Vui lng paste li!"
                 continue
             fi
         fi
         
-        # Kim tra format token (JWT format hoc payload)
-        # Chp nhn c token y  (3 phn) hoc payload (1 phn)
+        # Kim tra format token (JWT format hoc payload
+        # Chp nhn c token y  (3 phn hoc payload (1 phn
         if [[ "$CF_TOKEN" =~ ^eyJ[A-Za-z0-9_-]+ ]]; then
             print_success "Token hp l"
             break
@@ -227,7 +227,7 @@ get_new_config() {
     
     # Ly Hostname
     while true; do
-        read -p " Nhp Public Hostname (v d: n8n.yourdomain.com): " CF_HOSTNAME
+        read -p " Nhp Public Hostname - v d: n8n.yourdomain.com: " CF_HOSTNAME
         if [ -z "$CF_HOSTNAME" ]; then
             print_error "Hostname khng c  trng!"
             continue
@@ -238,7 +238,7 @@ get_new_config() {
             print_success "Hostname hp l"
             break
         else
-            print_warning "Hostname c v khng ng format. Bn c chc chn mun tip tc? (y/N)"
+            print_warning "Hostname c v khng ng format. Bn c chc chn mun tip tc? (y/N"
             read -p "" confirm_hostname
             if [ "$confirm_hostname" = "y" ] || [ "$confirm_hostname" = "Y" ]; then
                 break
@@ -246,7 +246,7 @@ get_new_config() {
         fi
     done
     
-    # Decode token  ly thng tin tunnel (nu c th)
+    # Decode token  ly thng tin tunnel (nu c th
     echo ""
     echo " ang phn tch token..."
     
@@ -268,7 +268,7 @@ get_new_config() {
     save_config "$CF_TOKEN" "$CF_HOSTNAME" "$TUNNEL_ID" "$ACCOUNT_TAG" "$TUNNEL_SECRET"
 }
 
-manage_config() {
+manage_config( {
     echo -e "${BLUE}================================================${NC}"
     echo -e "${BLUE}    QUN L CONFIG CLOUDFLARE${NC}"
     echo -e "${BLUE}================================================${NC}"
@@ -285,36 +285,36 @@ manage_config() {
         read -p "Nhp la chn [0-4]: " config_choice
         
         case $config_choice in
-            1)
+            1
                 show_detailed_config
                 ;;
-            2)
+            2
                 edit_config
                 ;;
-            3)
+            3
                 delete_config
                 ;;
-            4)
+            4
                 get_new_config
                 ;;
-            0)
+            0
                 return 0
                 ;;
-            *)
+            *
                 print_error "La chn khng hp l!"
                 ;;
         esac
     else
         echo " Cha c config no c lu."
         echo ""
-        read -p "Bn c mun to config mi khng? (y/N): " create_new
+        read -p "Bn c mun to config mi khng? (y/N: " create_new
         if [ "$create_new" = "y" ] || [ "$create_new" = "Y" ]; then
             get_new_config
         fi
     fi
 }
 
-show_detailed_config() {
+show_detailed_config( {
     if load_config; then
         echo -e "${BLUE} Chi tit config:${NC}"
         echo ""
@@ -331,7 +331,7 @@ show_detailed_config() {
     fi
 }
 
-decode_token_info() {
+decode_token_info( {
     local token="$1"
     local tunnel_id=""
     local account_tag=""
@@ -341,23 +341,23 @@ decode_token_info() {
     if command -v base64 >/dev/null 2>&1; then
         # Xc nh payload: nu c du chm th ly phn th 2, nu khng th ly ton b
         if [[ "$token" == *"."* ]]; then
-            TOKEN_PAYLOAD=$(echo "$token" | cut -d'.' -f2)
+            TOKEN_PAYLOAD=$(echo "$token" | cut -d'.' -f2
         else
-            # Token ch c payload (khng c header v signature)
+            # Token ch c payload (khng c header v signature
             TOKEN_PAYLOAD="$token"
         fi
         
         # Thm padding nu cn
-        case $((${#TOKEN_PAYLOAD} % 4)) in
-            2) TOKEN_PAYLOAD="${TOKEN_PAYLOAD}==" ;;
-            3) TOKEN_PAYLOAD="${TOKEN_PAYLOAD}=" ;;
+        case $((${#TOKEN_PAYLOAD} % 4 in
+            2 TOKEN_PAYLOAD="${TOKEN_PAYLOAD}==" ;;
+            3 TOKEN_PAYLOAD="${TOKEN_PAYLOAD}=" ;;
         esac
         
-        DECODED=$(echo "$TOKEN_PAYLOAD" | base64 -d 2>/dev/null || echo "")
+        DECODED=$(echo "$TOKEN_PAYLOAD" | base64 -d 2>/dev/null || echo ""
         if [ -n "$DECODED" ]; then
-            tunnel_id=$(echo "$DECODED" | grep -o '"t":"[^"]*"' | cut -d'"' -f4 2>/dev/null || echo "")
-            account_tag=$(echo "$DECODED" | grep -o '"a":"[^"]*"' | cut -d'"' -f4 2>/dev/null || echo "")
-            tunnel_secret=$(echo "$DECODED" | grep -o '"s":"[^"]*"' | cut -d'"' -f4 2>/dev/null || echo "")
+            tunnel_id=$(echo "$DECODED" | grep -o '"t":"[^"]*"' | cut -d'"' -f4 2>/dev/null || echo ""
+            account_tag=$(echo "$DECODED" | grep -o '"a":"[^"]*"' | cut -d'"' -f4 2>/dev/null || echo ""
+            tunnel_secret=$(echo "$DECODED" | grep -o '"s":"[^"]*"' | cut -d'"' -f4 2>/dev/null || echo ""
         fi
     fi
     
@@ -367,7 +367,7 @@ decode_token_info() {
     TUNNEL_SECRET="$tunnel_secret"
 }
 
-edit_config() {
+edit_config( {
     echo " Chnh sa config:"
     echo ""
     
@@ -377,7 +377,7 @@ edit_config() {
         
         # Kim tra xem c phi local mode khng
         if [ "$CF_HOSTNAME" = "localhost" ]; then
-            echo "   Mode: Local (khng cn Cloudflare)"
+            echo "   Mode: Local (khng cn Cloudflare"
             echo ""
             print_warning "  Bn ang  ch  Local Mode"
             echo " chuyn sang Cloudflare Mode, vui lng to config mi"
@@ -388,8 +388,8 @@ edit_config() {
         echo "   Token: ${CF_TOKEN:0:20}...${CF_TOKEN: -10}"
         echo ""
         
-        read -p "Nhp hostname mi (Enter  gi nguyn): " new_hostname
-        read -p "Nhp token mi (Enter  gi nguyn): " new_token
+        read -p "Nhp hostname mi (Enter  gi nguyn: " new_hostname
+        read -p "Nhp token mi (Enter  gi nguyn: " new_token
         
         if [ -n "$new_hostname" ]; then
             CF_HOSTNAME="$new_hostname"
@@ -416,14 +416,14 @@ edit_config() {
     fi
 }
 
-delete_config() {
+delete_config( {
     echo " Xa config:"
     echo ""
     
     if [ -f "$CONFIG_FILE" ]; then
         show_config_info
         echo ""
-        read -p " Bn c chc chn mun xa config ny khng? (y/N): " confirm_delete
+        read -p " Bn c chc chn mun xa config ny khng? (y/N: " confirm_delete
         
         if [ "$confirm_delete" = "y" ] || [ "$confirm_delete" = "Y" ]; then
             rm -f "$CONFIG_FILE"
@@ -437,13 +437,13 @@ delete_config() {
 }
 
 # === Utility Functions ===
-check_disk_space() {
+check_disk_space( {
     local required_space_mb="$1"
     local target_dir="$2"
     
-    # Ly dung lng trng (KB) v chuyn sang MB
-    local available_kb=$(df "$target_dir" | awk 'NR==2 {print $4}')
-    local available_mb=$((available_kb / 1024))
+    # Ly dung lng trng (KB v chuyn sang MB
+    local available_kb=$(df "$target_dir" | awk 'NR==2 {print $4}'
+    local available_mb=$((available_kb / 1024
     
     if [ $available_mb -lt $required_space_mb ]; then
         print_error "Khng  dung lng! Cn: ${required_space_mb}MB, C: ${available_mb}MB"
@@ -454,7 +454,7 @@ check_disk_space() {
     fi
 }
 
-validate_encryption_key() {
+validate_encryption_key( {
     local key="$1"
     
     # Kim tra key khng rng
@@ -463,15 +463,15 @@ validate_encryption_key() {
         return 1
     fi
     
-    # Kim tra  di ti thiu (base64 ca 32 bytes = ~44 chars)
+    # Kim tra  di ti thiu (base64 ca 32 bytes = ~44 chars
     if [ ${#key} -lt 32 ]; then
         print_error "Encryption key qu ngn! Cn t nht 32 k t"
         return 1
     fi
     
-    # Kim tra format base64 (optional - v c th dng plain text)
+    # Kim tra format base64 (optional - v c th dng plain text
     if echo "$key" | base64 -d >/dev/null 2>&1; then
-        print_success "Encryption key hp l (Base64 format)"
+        print_success "Encryption key hp l (Base64 format"
     else
         print_warning "Encryption key khng phi Base64, nhng vn c th s dng"
     fi
@@ -481,7 +481,7 @@ validate_encryption_key() {
 
 # === Enhanced Utility Functions ===
 
-check_container_health() {
+check_container_health( {
     local container_name="$1"
     local max_wait="${2:-60}"
     local wait_time=0
@@ -489,24 +489,24 @@ check_container_health() {
     print_section "Kim tra sc khe container: $container_name"
     
     while [ $wait_time -lt $max_wait ]; do
-        local health_status=$(docker inspect --format='{{.State.Health.Status}}' "$container_name" 2>/dev/null || echo "no-healthcheck")
+        local health_status=$(docker inspect --format='{{.State.Health.Status}}' "$container_name" 2>/dev/null || echo "no-healthcheck"
         
         case "$health_status" in
-            "healthy")
+            "healthy"
                 print_success "Container $container_name ang khe mnh"
                 return 0
                 ;;
-            "unhealthy")
+            "unhealthy"
                 print_error "Container $container_name khng khe mnh"
                 return 1
                 ;;
-            "starting")
-                echo " Container ang khi ng... ($wait_time/${max_wait}s)"
+            "starting"
+                echo " Container ang khi ng... ($wait_time/${max_wait}s"
                 ;;
-            "no-healthcheck")
+            "no-healthcheck"
                 # Fallback: kim tra container c ang chy khng
                 if docker ps --format '{{.Names}}' | grep -q "^${container_name}$"; then
-                    print_success "Container $container_name ang chy (khng c healthcheck)"
+                    print_success "Container $container_name ang chy (khng c healthcheck"
                     return 0
                 else
                     print_error "Container $container_name khng chy"
@@ -516,14 +516,14 @@ check_container_health() {
         esac
         
         sleep 5
-        wait_time=$((wait_time + 5))
+        wait_time=$((wait_time + 5
     done
     
     print_warning "Timeout khi kim tra container health"
     return 1
 }
 
-backup_encryption_key() {
+backup_encryption_key( {
     local backup_location="$1"
     
     if [ -f "$N8N_ENCRYPTION_KEY_FILE" ]; then
@@ -535,11 +535,11 @@ backup_encryption_key() {
     fi
 }
 
-cleanup_old_backups() {
+cleanup_old_backups( {
     print_section "Dn dp backup c"
     
     if [ -d "$BACKUP_DIR" ]; then
-        BACKUP_COUNT=$(ls -1 "$BACKUP_DIR"/*.tar.gz 2>/dev/null | wc -l)
+        BACKUP_COUNT=$(ls -1 "$BACKUP_DIR"/*.tar.gz 2>/dev/null | wc -l
         
         # Gi li 10 backup gn nht
         if [ $BACKUP_COUNT -gt 10 ]; then
@@ -548,9 +548,9 @@ cleanup_old_backups() {
             # Tnh ton dung lng s c gii phng
             local space_to_free=0
             ls -t "$BACKUP_DIR"/*.tar.gz | tail -n +11 | while read old_backup; do
-                local file_size=$(du -m "$old_backup" 2>/dev/null | cut -f1)
-                space_to_free=$((space_to_free + file_size))
-                echo "   Xa: $(basename "$old_backup") (${file_size}MB)"
+                local file_size=$(du -m "$old_backup" 2>/dev/null | cut -f1
+                space_to_free=$((space_to_free + file_size
+                echo "   Xa: $(basename "$old_backup" (${file_size}MB"
                 rm -f "$old_backup"
                 # Xa file info tng ng
                 info_file="${old_backup%.tar.gz}.info"
@@ -559,13 +559,13 @@ cleanup_old_backups() {
             
             print_success " dn dp backup c, gii phng ~${space_to_free}MB"
         else
-            echo " S lng backup ($BACKUP_COUNT) trong gii hn cho php"
+            echo " S lng backup ($BACKUP_COUNT trong gii hn cho php"
         fi
     fi
     echo ""
 }
 
-get_latest_version() {
+get_latest_version( {
     # Ci thin cch ly phin bn mi nht
     echo " ang kim tra phin bn mi nht..."
     
@@ -575,13 +575,13 @@ get_latest_version() {
     # Cch 1: Docker Hub API
     if [ -z "$LATEST_VERSION" ]; then
         LATEST_VERSION=$(curl -s "https://registry.hub.docker.com/v2/repositories/n8nio/n8n/tags/?page_size=100" | \
-            grep -o '"name":"[0-9][^"]*"' | grep -v "latest\|beta\|alpha\|rc\|exp" | head -1 | cut -d'"' -f4 2>/dev/null || echo "")
+            grep -o '"name":"[0-9][^"]*"' | grep -v "latest\|beta\|alpha\|rc\|exp" | head -1 | cut -d'"' -f4 2>/dev/null || echo ""
     fi
     
     # Cch 2: GitHub API
     if [ -z "$LATEST_VERSION" ]; then
         LATEST_VERSION=$(curl -s "https://api.github.com/repos/n8n-io/n8n/releases/latest" | \
-            grep '"tag_name":' | cut -d'"' -f4 | sed 's/^n8n@//' 2>/dev/null || echo "")
+            grep '"tag_name":' | cut -d'"' -f4 | sed 's/^n8n@//' 2>/dev/null || echo ""
     fi
     
     # Fallback
@@ -592,7 +592,7 @@ get_latest_version() {
     echo "$LATEST_VERSION"
 }
 
-health_check() {
+health_check( {
     print_section "Kim tra sc khe N8N"
     
     local max_attempts=6
@@ -618,9 +618,9 @@ health_check() {
             
             # Hin th URL da trn mode
             if [ "$CF_HOSTNAME" = "localhost" ]; then
-                print_success " Truy cp (Local Mode): http://localhost:5678"
+                print_success " Truy cp (Local Mode: http://localhost:5678"
             else
-                print_success " Truy cp (Cloudflare Mode): https://$CF_HOSTNAME"
+                print_success " Truy cp (Cloudflare Mode: https://$CF_HOSTNAME"
             fi
             return 0
         fi
@@ -630,19 +630,19 @@ health_check() {
             sleep 10
         fi
         
-        attempt=$((attempt + 1))
+        attempt=$((attempt + 1
     done
     
     print_warning "N8N service c th cha sn sng hoc c vn "
-    echo " Container logs (20 dng cui):"
+    echo " Container logs (20 dng cui:"
     docker compose -f "$DOCKER_COMPOSE_FILE" logs --tail=20
     return 1
 }
 
-rollback_backup() {
+rollback_backup( {
     print_section "Rollback t backup"
     
-    if [ ! -d "$BACKUP_DIR" ] || [ -z "$(ls -A "$BACKUP_DIR"/*.tar.gz 2>/dev/null)" ]; then
+    if [ ! -d "$BACKUP_DIR" ] || [ -z "$(ls -A "$BACKUP_DIR"/*.tar.gz 2>/dev/null" ]; then
         print_error "Khng tm thy backup no  rollback!"
         return 1
     fi
@@ -651,27 +651,27 @@ rollback_backup() {
     ls -lah "$BACKUP_DIR"/*.tar.gz | nl
     echo ""
     
-    read -p "Nhp s th t backup mun rollback (hoc Enter  hy): " backup_choice
+    read -p "Nhp s th t backup mun rollback (hoc Enter  hy: " backup_choice
     
     if [ -z "$backup_choice" ]; then
         echo "Hy rollback"
         return 0
     fi
     
-    SELECTED_BACKUP=$(ls -t "$BACKUP_DIR"/*.tar.gz | sed -n "${backup_choice}p")
+    SELECTED_BACKUP=$(ls -t "$BACKUP_DIR"/*.tar.gz | sed -n "${backup_choice}p"
     
     if [ -z "$SELECTED_BACKUP" ] || [ ! -f "$SELECTED_BACKUP" ]; then
         print_error "Backup khng hp l!"
         return 1
     fi
     
-    echo " Rollback t: $(basename "$SELECTED_BACKUP")"
+    echo " Rollback t: $(basename "$SELECTED_BACKUP""
     echo ""
     print_warning "  CNH BO: Rollback d liu t mt phin bn n8n c c th gy ra vn  tng thch"
-    print_warning "vi phin bn container hin ti. C s d liu c th cn c di chuyn (migrate)."
+    print_warning "vi phin bn container hin ti. C s d liu c th cn c di chuyn (migrate."
     print_warning "Hy chc chn rng bn hiu r ri ro trc khi tip tc."
     echo ""
-    read -p "Bn c chc chn mun rollback? (y/N): " confirm
+    read -p "Bn c chc chn mun rollback? (y/N: " confirm
     
     if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
         echo "Hy rollback"
@@ -683,13 +683,13 @@ rollback_backup() {
     docker compose -f "$DOCKER_COMPOSE_FILE" down
     
     # Backup trng thi hin ti trc khi rollback
-    ROLLBACK_BACKUP="n8n_before_rollback_$(date +%Y%m%d_%H%M%S).tar.gz"
+    ROLLBACK_BACKUP="n8n_before_rollback_$(date +%Y%m%d_%H%M%S.tar.gz"
     echo " To backup trng thi hin ti: $ROLLBACK_BACKUP"
-    tar -czf "$BACKUP_DIR/$ROLLBACK_BACKUP" -C "$(dirname "$N8N_BASE_DIR")" "$(basename "$N8N_BASE_DIR")" 2>/dev/null || true
+    tar -czf "$BACKUP_DIR/$ROLLBACK_BACKUP" -C "$(dirname "$N8N_BASE_DIR"" "$(basename "$N8N_BASE_DIR"" 2>/dev/null || true
     
     # Restore t backup
     echo " Restore t backup..."
-    cd "$(dirname "$N8N_BASE_DIR")"
+    cd "$(dirname "$N8N_BASE_DIR""
     tar -xzf "$SELECTED_BACKUP"
     
     # Khi ng li
@@ -708,16 +708,16 @@ rollback_backup() {
 }
 
 # === Backup & Update Functions ===
-check_current_version() {
+check_current_version( {
     print_section "Kim tra phin bn hin ti"
     
     if [ -f "$DOCKER_COMPOSE_FILE" ] && docker compose -f "$DOCKER_COMPOSE_FILE" ps | grep -q "Up"; then
-        CURRENT_VERSION=$(docker compose -f "$DOCKER_COMPOSE_FILE" exec -T n8n n8n --version 2>/dev/null || echo "Unknown")
+        CURRENT_VERSION=$(docker compose -f "$DOCKER_COMPOSE_FILE" exec -T n8n n8n --version 2>/dev/null || echo "Unknown"
         print_success "Phin bn hin ti: $CURRENT_VERSION"
         
         # Kim tra phin bn mi nht
         print_section "Kim tra phin bn mi nht"
-        LATEST_VERSION=$(get_latest_version)
+        LATEST_VERSION=$(get_latest_version
         print_success "Tm thy phin bn mi nht: $LATEST_VERSION"
         
         if [ "$CURRENT_VERSION" != "$LATEST_VERSION" ] && [ "$LATEST_VERSION" != "latest" ]; then
@@ -732,15 +732,15 @@ check_current_version() {
     echo ""
 }
 
-show_server_status() {
+show_server_status( {
     print_section "Trng thi server"
-    echo -e "${YELLOW}Thi gian: $(date)${NC}"
+    echo -e "${YELLOW}Thi gian: $(date${NC}"
     
     echo "System Info:"
-    echo "  - Uptime: $(uptime -p)"
-    echo "  - Load: $(uptime | awk -F'load average:' '{print $2}')"
-    echo "  - Memory: $(free -h | awk 'NR==2{printf "%.1f%% (%s/%s)", $3*100/$2, $3, $2}')"
-    echo "  - Disk: $(df -h / | awk 'NR==2{printf "%s (%s used)", $5, $3}')"
+    echo "  - Uptime: $(uptime -p"
+    echo "  - Load: $(uptime | awk -F'load average:' '{print $2}'"
+    echo "  - Memory: $(free -h | awk 'NR==2{printf "%.1f%% (%s/%s", $3*100/$2, $3, $2}'"
+    echo "  - Disk: $(df -h / | awk 'NR==2{printf "%s (%s used", $5, $3}'"
     echo ""
     
     if [ -f "$DOCKER_COMPOSE_FILE" ]; then
@@ -754,12 +754,12 @@ show_server_status() {
     echo ""
 }
 
-count_backups() {
+count_backups( {
     print_section "Thng bo  backup bao nhiu bn v m t chi tit"
     
     if [ -d "$BACKUP_DIR" ]; then
-        BACKUP_COUNT=$(ls -1 "$BACKUP_DIR"/*.tar.gz 2>/dev/null | wc -l)
-        TOTAL_SIZE=$(du -sh "$BACKUP_DIR" 2>/dev/null | cut -f1)
+        BACKUP_COUNT=$(ls -1 "$BACKUP_DIR"/*.tar.gz 2>/dev/null | wc -l
+        TOTAL_SIZE=$(du -sh "$BACKUP_DIR" 2>/dev/null | cut -f1
         
         echo " S lng backup hin c: $BACKUP_COUNT bn"
         echo " Tng dung lng backup: $TOTAL_SIZE"
@@ -773,7 +773,7 @@ count_backups() {
             echo ""
             
             echo " Chi tit ni dung backup:"
-            echo "   N8N workflows v database (SQLite)"
+            echo "   N8N workflows v database (SQLite"
             echo "   N8N settings v configurations"
             echo "   Custom nodes v packages"
             echo "   Cloudflared tunnel configurations"
@@ -790,15 +790,15 @@ count_backups() {
     echo ""
 }
 
-create_backup() {
-    print_section "Backup ti $(date)"
+create_backup( {
+    print_section "Backup ti $(date"
     
     # To th mc backup nu cha c
     mkdir -p "$BACKUP_DIR"
     
     BACKUP_FILE="n8n_backup_${TIMESTAMP}.tar.gz"
     echo " Backup file: $BACKUP_FILE"
-    echo " Thi gian backup: $(date)"
+    echo " Thi gian backup: $(date"
     
     # Dng container  backup an ton
     if [ -f "$DOCKER_COMPOSE_FILE" ]; then
@@ -816,16 +816,16 @@ create_backup() {
     
     # Backup ton b
     tar -czf "$BACKUP_DIR/$BACKUP_FILE" \
-        -C "$(dirname "$N8N_BASE_DIR")" "$(basename "$N8N_BASE_DIR")" \
+        -C "$(dirname "$N8N_BASE_DIR"" "$(basename "$N8N_BASE_DIR"" \
         -C /etc cloudflared/ \
-        -C "$(dirname "$0")" "$(basename "$0")" \
+        -C "$(dirname "$0"" "$(basename "$0"" \
         2>/dev/null || true
     
-    BACKUP_SIZE=$(du -sh "$BACKUP_DIR/$BACKUP_FILE" | cut -f1)
-    print_success "Backup hon thnh: $BACKUP_DIR/$BACKUP_FILE ($BACKUP_SIZE)"
+    BACKUP_SIZE=$(du -sh "$BACKUP_DIR/$BACKUP_FILE" | cut -f1
+    print_success "Backup hon thnh: $BACKUP_DIR/$BACKUP_FILE ($BACKUP_SIZE"
     
     # Cp nht thng k backup
-    BACKUP_COUNT=$(ls -1 "$BACKUP_DIR"/*.tar.gz 2>/dev/null | wc -l)
+    BACKUP_COUNT=$(ls -1 "$BACKUP_DIR"/*.tar.gz 2>/dev/null | wc -l
     echo " Tng s backup: $BACKUP_COUNT bn"
     
     # Dn dp backup c nu cn
@@ -835,44 +835,44 @@ create_backup() {
     cat > "$BACKUP_DIR/backup_${TIMESTAMP}.info" << EOF
 N8N Backup Information
 ======================
-Timestamp: $(date)
+Timestamp: $(date
 Backup File: $BACKUP_FILE
 Size: $BACKUP_SIZE
 N8N Version: ${CURRENT_VERSION:-Unknown}
-Server IP: $(hostname -I | awk '{print $1}')
-Hostname: $(hostname)
+Server IP: $(hostname -I | awk '{print $1}'
+Hostname: $(hostname
 
 Backup Contents:
 ================
- N8N workflows v database (SQLite)
+ N8N workflows v database (SQLite
  N8N user settings v preferences  
  Custom nodes v installed packages
  Cloudflared tunnel configurations
  Docker compose files
  Local files v file uploads
  Environment variables
- SSL certificates (if any)
+ SSL certificates (if any
  Management scripts
 
 Restore Instructions:
 ====================
 1. Stop current N8N: docker compose -f $DOCKER_COMPOSE_FILE down
-2. Extract backup: cd $(dirname "$N8N_BASE_DIR") && tar -xzf $BACKUP_DIR/$BACKUP_FILE
+2. Extract backup: cd $(dirname "$N8N_BASE_DIR" && tar -xzf $BACKUP_DIR/$BACKUP_FILE
 3. Start N8N: docker compose -f $DOCKER_COMPOSE_FILE up -d
 
 System Info at Backup:
 ======================
-Uptime: $(uptime -p)
-Load: $(uptime | awk -F'load average:' '{print $2}')
-Memory: $(free -h | awk 'NR==2{printf "%.1f%% (%s/%s)", $3*100/$2, $3, $2}')
-Disk: $(df -h / | awk 'NR==2{printf "%s (%s used)", $5, $3}')
+Uptime: $(uptime -p
+Load: $(uptime | awk -F'load average:' '{print $2}'
+Memory: $(free -h | awk 'NR==2{printf "%.1f%% (%s/%s", $3*100/$2, $3, $2}'
+Disk: $(df -h / | awk 'NR==2{printf "%s (%s used", $5, $3}'
 EOF
     
     print_success "Thng tin backup  lu: backup_${TIMESTAMP}.info"
     echo ""
 }
 
-update_n8n() {
+update_n8n( {
     print_section "Cp nht N8N ln phin bn mi nht"
     
     if [ ! -f "$DOCKER_COMPOSE_FILE" ]; then
@@ -886,12 +886,12 @@ update_n8n() {
     echo " Khi ng li vi phin bn mi..."
     docker compose -f "$DOCKER_COMPOSE_FILE" up -d
     
-    echo " i container khi ng (15 giy)..."
+    echo " i container khi ng (15 giy..."
     sleep 15
     
     # Kim tra trng thi
     if docker compose -f "$DOCKER_COMPOSE_FILE" ps | grep -q "Up"; then
-        NEW_VERSION=$(docker compose -f "$DOCKER_COMPOSE_FILE" exec -T n8n n8n --version 2>/dev/null || echo "Unknown")
+        NEW_VERSION=$(docker compose -f "$DOCKER_COMPOSE_FILE" exec -T n8n n8n --version 2>/dev/null || echo "Unknown"
         print_success "Update thnh cng!"
         print_success "Phin bn mi: $NEW_VERSION"
         
@@ -910,7 +910,7 @@ update_n8n() {
     echo ""
 }
 
-backup_and_update() {
+backup_and_update( {
     echo -e "${BLUE}================================================${NC}"
     echo -e "${BLUE}    N8N BACKUP & UPDATE PROCESS${NC}"
     echo -e "${BLUE}================================================${NC}"
@@ -930,15 +930,15 @@ backup_and_update() {
 }
 
 # === Uninstall Functions ===
-create_manifest() {
+create_manifest( {
     local manifest_file="$N8N_BASE_DIR/.n8n_manifest"
     
     cat > "$manifest_file" << EOF
 # N8N Installation Manifest
-# Generated on: $(date)
+# Generated on: $(date
 # This file tracks what was installed for uninstall purposes
 
-INSTALL_DATE="$(date)"
+INSTALL_DATE="$(date"
 N8N_BASE_DIR="$N8N_BASE_DIR"
 N8N_VOLUME_DIR="$N8N_VOLUME_DIR"
 BACKUP_DIR="$BACKUP_DIR"
@@ -960,7 +960,7 @@ EOF
     print_success "Manifest created: $manifest_file"
 }
 
-scan_installation() {
+scan_installation( {
     print_section "Qut VPS  tm cc thnh phn N8N"
     echo ""
     
@@ -969,8 +969,8 @@ scan_installation() {
     # Kim tra Docker
     echo " Kim tra Docker..."
     if command -v docker &> /dev/null; then
-        echo "   Docker: $(docker --version)"
-        ((found_items++))
+        echo "   Docker: $(docker --version"
+        ((found_items++
     else
         echo "   Docker: Khng tm thy"
     fi
@@ -978,8 +978,8 @@ scan_installation() {
     # Kim tra Docker Compose
     echo " Kim tra Docker Compose..."
     if docker compose version &> /dev/null 2>&1; then
-        echo "   Docker Compose: $(docker compose version 2>/dev/null | head -1)"
-        ((found_items++))
+        echo "   Docker Compose: $(docker compose version 2>/dev/null | head -1"
+        ((found_items++
     else
         echo "   Docker Compose: Khng tm thy"
     fi
@@ -987,9 +987,9 @@ scan_installation() {
     # Kim tra N8N container
     echo " Kim tra N8N container..."
     if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q "^n8n$"; then
-        local status=$(docker ps --format '{{.Status}}' --filter "name=^n8n$" 2>/dev/null || echo "stopped")
+        local status=$(docker ps --format '{{.Status}}' --filter "name=^n8n$" 2>/dev/null || echo "stopped"
         echo "   N8N container: $status"
-        ((found_items++))
+        ((found_items++
     else
         echo "   N8N container: Khng tm thy"
     fi
@@ -997,9 +997,9 @@ scan_installation() {
     # Kim tra N8N image
     echo " Kim tra N8N image..."
     if docker images --format '{{.Repository}}' 2>/dev/null | grep -q "n8nio/n8n"; then
-        local image_id=$(docker images --format '{{.ID}}' --filter "reference=n8nio/n8n" 2>/dev/null | head -1)
+        local image_id=$(docker images --format '{{.ID}}' --filter "reference=n8nio/n8n" 2>/dev/null | head -1
         echo "   N8N image: $image_id"
-        ((found_items++))
+        ((found_items++
     else
         echo "   N8N image: Khng tm thy"
     fi
@@ -1008,7 +1008,7 @@ scan_installation() {
     echo " Kim tra N8N network..."
     if docker network ls --format '{{.Name}}' 2>/dev/null | grep -q "n8n-network"; then
         echo "   N8N network: n8n-network"
-        ((found_items++))
+        ((found_items++
     else
         echo "   N8N network: Khng tm thy"
     fi
@@ -1016,8 +1016,8 @@ scan_installation() {
     # Kim tra Cloudflared
     echo " Kim tra Cloudflared..."
     if command -v cloudflared &> /dev/null; then
-        echo "   Cloudflared: $(cloudflared --version 2>/dev/null | head -1)"
-        ((found_items++))
+        echo "   Cloudflared: $(cloudflared --version 2>/dev/null | head -1"
+        ((found_items++
     else
         echo "   Cloudflared: Khng tm thy"
     fi
@@ -1025,9 +1025,9 @@ scan_installation() {
     # Kim tra Cloudflared service
     echo " Kim tra Cloudflared service..."
     if systemctl is-enabled cloudflared &> /dev/null 2>&1; then
-        local cf_status=$(systemctl is-active cloudflared 2>/dev/null || echo "unknown")
+        local cf_status=$(systemctl is-active cloudflared 2>/dev/null || echo "unknown"
         echo "   Cloudflared service: $cf_status"
-        ((found_items++))
+        ((found_items++
     else
         echo "   Cloudflared service: Khng tm thy"
     fi
@@ -1035,9 +1035,9 @@ scan_installation() {
     # Kim tra N8N data directory
     echo " Kim tra N8N data directory..."
     if [ -d "$N8N_BASE_DIR" ]; then
-        local size=$(du -sh "$N8N_BASE_DIR" 2>/dev/null | cut -f1)
-        echo "   N8N directory: $N8N_BASE_DIR ($size)"
-        ((found_items++))
+        local size=$(du -sh "$N8N_BASE_DIR" 2>/dev/null | cut -f1
+        echo "   N8N directory: $N8N_BASE_DIR ($size"
+        ((found_items++
     else
         echo "   N8N directory: Khng tm thy"
     fi
@@ -1045,10 +1045,10 @@ scan_installation() {
     # Kim tra Backup directory
     echo " Kim tra Backup directory..."
     if [ -d "$BACKUP_DIR" ]; then
-        local backup_count=$(ls -1 "$BACKUP_DIR"/*.tar.gz 2>/dev/null | wc -l)
-        local backup_size=$(du -sh "$BACKUP_DIR" 2>/dev/null | cut -f1)
-        echo "   Backup directory: $BACKUP_DIR ($backup_count backups, $backup_size)"
-        ((found_items++))
+        local backup_count=$(ls -1 "$BACKUP_DIR"/*.tar.gz 2>/dev/null | wc -l
+        local backup_size=$(du -sh "$BACKUP_DIR" 2>/dev/null | cut -f1
+        echo "   Backup directory: $BACKUP_DIR ($backup_count backups, $backup_size"
+        ((found_items++
     else
         echo "   Backup directory: Khng tm thy"
     fi
@@ -1057,7 +1057,7 @@ scan_installation() {
     echo " Kim tra Cloudflared config..."
     if [ -f "$CLOUDFLARED_CONFIG_FILE" ]; then
         echo "   Cloudflared config: $CLOUDFLARED_CONFIG_FILE"
-        ((found_items++))
+        ((found_items++
     else
         echo "   Cloudflared config: Khng tm thy"
     fi
@@ -1066,7 +1066,7 @@ scan_installation() {
     echo " Kim tra Config file..."
     if [ -f "$CONFIG_FILE" ]; then
         echo "   Config file: $CONFIG_FILE"
-        ((found_items++))
+        ((found_items++
     else
         echo "   Config file: Khng tm thy"
     fi
@@ -1078,7 +1078,7 @@ scan_installation() {
     return 0
 }
 
-uninstall_n8n() {
+uninstall_n8n( {
     print_section "G ci t N8N"
     echo ""
     
@@ -1094,13 +1094,13 @@ uninstall_n8n() {
     echo "   Xa N8N network"
     echo "   Dng Cloudflared service"
     echo "   Xa Cloudflared config"
-    echo "   Xa N8N data directory (workflows, database, etc.)"
+    echo "   Xa N8N data directory (workflows, database, etc."
     echo "   Xa config files"
     echo ""
     print_warning "  Backup s c GI LI trong: $BACKUP_DIR"
     echo ""
     
-    read -p "Bn c chc chn mun g ci N8N? (y/N): " confirm
+    read -p "Bn c chc chn mun g ci N8N? (y/N: " confirm
     if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
         echo "Hy g ci"
         return 0
@@ -1116,7 +1116,7 @@ uninstall_n8n() {
         docker compose -f "$DOCKER_COMPOSE_FILE" down 2>/dev/null || true
         print_success "N8N container  dng"
     else
-        echo "   (N8N container khng chy)"
+        echo "   (N8N container khng chy"
     fi
     
     # 2. Xa N8N container
@@ -1125,7 +1125,7 @@ uninstall_n8n() {
         docker rm -f n8n 2>/dev/null || true
         print_success "N8N container  xa"
     else
-        echo "   (N8N container khng tn ti)"
+        echo "   (N8N container khng tn ti"
     fi
     
     # 3. Xa N8N image
@@ -1134,7 +1134,7 @@ uninstall_n8n() {
         docker rmi -f n8nio/n8n 2>/dev/null || true
         print_success "N8N image  xa"
     else
-        echo "   (N8N image khng tn ti)"
+        echo "   (N8N image khng tn ti"
     fi
     
     # 4. Xa N8N network
@@ -1143,7 +1143,7 @@ uninstall_n8n() {
         docker network rm n8n-network 2>/dev/null || true
         print_success "N8N network  xa"
     else
-        echo "   (N8N network khng tn ti)"
+        echo "   (N8N network khng tn ti"
     fi
     
     # 5. Dng Cloudflared service
@@ -1153,7 +1153,7 @@ uninstall_n8n() {
         systemctl disable cloudflared 2>/dev/null || true
         print_success "Cloudflared service  dng"
     else
-        echo "   (Cloudflared service khng chy)"
+        echo "   (Cloudflared service khng chy"
     fi
     
     # 6. Xa Cloudflared config
@@ -1162,7 +1162,7 @@ uninstall_n8n() {
         rm -f "$CLOUDFLARED_CONFIG_FILE" 2>/dev/null || true
         print_success "Cloudflared config  xa"
     else
-        echo "   (Cloudflared config khng tn ti)"
+        echo "   (Cloudflared config khng tn ti"
     fi
     
     # 7. Xa N8N data directory
@@ -1171,7 +1171,7 @@ uninstall_n8n() {
         rm -rf "$N8N_BASE_DIR" 2>/dev/null || true
         print_success "N8N data directory  xa"
     else
-        echo "   (N8N data directory khng tn ti)"
+        echo "   (N8N data directory khng tn ti"
     fi
     
     # 8. Xa config file
@@ -1180,7 +1180,7 @@ uninstall_n8n() {
         rm -f "$CONFIG_FILE" 2>/dev/null || true
         print_success "Config file  xa"
     else
-        echo "   (Config file khng tn ti)"
+        echo "   (Config file khng tn ti"
     fi
     
     echo ""
@@ -1203,7 +1203,7 @@ uninstall_n8n() {
 }
 
 # === Original Installation Functions ===
-install_n8n() {
+install_n8n( {
     echo -e "${BLUE}================================================${NC}"
     echo -e "${BLUE}    CLOUDFLARE TUNNEL & N8N SETUP${NC}"
     echo -e "${BLUE}================================================${NC}"
@@ -1214,7 +1214,7 @@ install_n8n() {
     # --- Check for existing config ---
     if show_config_info; then
         echo -e "${YELLOW} Bn  c config trc !${NC}"
-        read -p "Bn c mun s dng li config ny khng? (y/N): " use_existing
+        read -p "Bn c mun s dng li config ny khng? (y/N: " use_existing
         
         if [ "$use_existing" = "y" ] || [ "$use_existing" = "Y" ]; then
             load_config
@@ -1233,12 +1233,12 @@ install_n8n() {
     # --- System Update and Prerequisites ---
     echo ">>> Updating system packages..."
     apt update
-    echo ">>> Installing prerequisites (curl, wget, gpg, etc.)..."
+    echo ">>> Installing prerequisites (curl, wget, gpg, etc...."
     apt install -y apt-transport-https ca-certificates curl software-properties-common gnupg lsb-release wget
 
     # --- Install Docker ---
     if command -v docker &> /dev/null; then
-        print_success "Docker  c ci t: $(docker --version)"
+        print_success "Docker  c ci t: $(docker --version"
         
         # Kim tra Docker service
         if ! systemctl is-active docker &> /dev/null; then
@@ -1258,23 +1258,23 @@ install_n8n() {
         
         # Add the repository to Apt sources:
         echo \
-          "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
-          $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+          "deb [arch=$(dpkg --print-architecture signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+          $(. /etc/os-release && echo "$VERSION_CODENAME" stable" | \
           tee /etc/apt/sources.list.d/docker.list > /dev/null
         apt update
 
         # Install Docker packages
         apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-        print_success "Docker installed successfully: $(docker --version)"
+        print_success "Docker installed successfully: $(docker --version"
 
         # Ensure Docker service is running and enabled
         systemctl start docker
         systemctl enable docker
         print_success "Docker service started and enabled"
 
-        # Add the current sudo user (if exists) to the docker group
+        # Add the current sudo user (if exists to the docker group
         # This avoids needing sudo for every docker command AFTER logging out/in again
-        REAL_USER="${SUDO_USER:-$(whoami)}"
+        REAL_USER="${SUDO_USER:-$(whoami}"
         if id "$REAL_USER" &>/dev/null && ! getent group docker | grep -qw "$REAL_USER"; then
           echo ">>> Adding user '$REAL_USER' to the 'docker' group..."
           usermod -aG docker "$REAL_USER"
@@ -1282,30 +1282,30 @@ install_n8n() {
         fi
     fi
     
-    # nh ngha REAL_USER cho tt c trng hp (sau khi ci t hoc  c sn)
-    REAL_USER="${SUDO_USER:-$(whoami)}"
+    # nh ngha REAL_USER cho tt c trng hp (sau khi ci t hoc  c sn
+    REAL_USER="${SUDO_USER:-$(whoami}"
 
     # --- Install Cloudflared ---
     if command -v cloudflared &> /dev/null; then
-        print_success "Cloudflared  c ci t: $(cloudflared --version 2>/dev/null | head -1)"
+        print_success "Cloudflared  c ci t: $(cloudflared --version 2>/dev/null | head -1"
     else
         echo ">>> Cloudflared not found. Installing Cloudflared..."
     
         # Automatically determine the system architecture
-        ARCH=$(dpkg --print-architecture)
+        ARCH=$(dpkg --print-architecture
         echo ">>> Detected system architecture: $ARCH"
     
         local CLOUDFLARED_DEB_URL
         local CLOUDFLARED_DEB_PATH="/tmp/cloudflared-linux-$ARCH.deb" # Use detected arch in filename
     
         case "$ARCH" in
-            amd64)
+            amd64
                 CLOUDFLARED_DEB_URL="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb"
                 ;;
-            arm64|armhf) # armhf for older 32-bit ARM, arm64 for 64-bit ARM
+            arm64|armhf # armhf for older 32-bit ARM, arm64 for 64-bit ARM
                 CLOUDFLARED_DEB_URL="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-$ARCH.deb"
                 ;;
-            *)
+            *
                 print_error "Unsupported architecture: $ARCH. Cannot install Cloudflared automatically."
                 exit 1
                 ;;
@@ -1328,22 +1328,22 @@ install_n8n() {
         fi
     
         rm "$CLOUDFLARED_DEB_PATH" # Clean up downloaded file
-        print_success "Cloudflared installed successfully: $(cloudflared --version 2>/dev/null | head -1)"
+        print_success "Cloudflared installed successfully: $(cloudflared --version 2>/dev/null | head -1"
     fi
 
     # --- Setup n8n Directory and Permissions ---
     echo ">>> Setting up n8n data directory: $N8N_BASE_DIR"
     mkdir -p "$N8N_VOLUME_DIR" # Create the specific volume dir as well
     
-    # Set ownership to UID 1000, GID 1000 (standard 'node' user in n8n official container)
+    # Set ownership to UID 1000, GID 1000 (standard 'node' user in n8n official container
     # This prevents permission errors when n8n tries to write data
     # NOTE: This assumes the official n8n Docker image. Custom images may use different UIDs.
     echo ">>> Setting permissions for n8n data volume..."
     chown -R 1000:1000 "$N8N_VOLUME_DIR"
     
-    # Set secure permissions (700 = owner only read/write/execute)
+    # Set secure permissions (700 = owner only read/write/execute
     # This protects sensitive data like credentials, workflows, and database
-    echo ">>> Setting secure permissions (700) for n8n data..."
+    echo ">>> Setting secure permissions (700 for n8n data..."
     chmod -R 700 "$N8N_VOLUME_DIR"
 
     # --- Generate or Load N8N Encryption Key ---
@@ -1351,12 +1351,12 @@ install_n8n() {
     
     if [ -f "$N8N_ENCRYPTION_KEY_FILE" ]; then
         echo ">>> Loading existing N8N encryption key..."
-        N8N_ENCRYPTION_KEY=$(cat "$N8N_ENCRYPTION_KEY_FILE")
+        N8N_ENCRYPTION_KEY=$(cat "$N8N_ENCRYPTION_KEY_FILE"
         print_success "Encryption key loaded from: $N8N_ENCRYPTION_KEY_FILE"
     else
         echo ">>> Generating new N8N encryption key..."
         # Generate a secure random 32-byte key encoded in base64
-        N8N_ENCRYPTION_KEY=$(openssl rand -base64 32 | tr -d '\n')
+        N8N_ENCRYPTION_KEY=$(openssl rand -base64 32 | tr -d '\n'
         
         # Save the key securely
         echo "$N8N_ENCRYPTION_KEY" > "$N8N_ENCRYPTION_KEY_FILE"
@@ -1369,7 +1369,7 @@ install_n8n() {
     # --- Check if N8N container already exists ---
     if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q "^n8n$"; then
         print_warning "  N8N container  tn ti!"
-        read -p "Bn c mun khi ng li container khng? (y/N): " restart_container
+        read -p "Bn c mun khi ng li container khng? (y/N: " restart_container
         if [ "$restart_container" = "y" ] || [ "$restart_container" = "Y" ]; then
             docker compose -f "$DOCKER_COMPOSE_FILE" up -d 2>/dev/null || true
             print_success "N8N container  c khi ng"
@@ -1381,7 +1381,7 @@ install_n8n() {
     # --- Create Docker Compose File ---
     echo ">>> Creating Docker Compose file: $DOCKER_COMPOSE_FILE"
     # Determine Timezone
-    SYSTEM_TZ=$(cat /etc/timezone 2>/dev/null || echo "$DEFAULT_TZ")
+    SYSTEM_TZ=$(cat /etc/timezone 2>/dev/null || echo "$DEFAULT_TZ"
     
     # Determine port binding based on mode
     if [ "$CF_HOSTNAME" = "localhost" ]; then
@@ -1422,7 +1422,7 @@ EOF
       - N8N_METRICS=false
       - N8N_DIAGNOSTICS_ENABLED=false
       - N8N_VERSION_NOTIFICATIONS_ENABLED=false
-      # N8N_SECURE_COOKIE=false # DO NOT USE THIS when accessing via HTTPS (Cloudflared)
+      # N8N_SECURE_COOKIE=false # DO NOT USE THIS when accessing via HTTPS (Cloudflared
     volumes:
       # Mount the local data directory into the container
       - ./n8n_data:/home/node/.n8n
@@ -1435,7 +1435,7 @@ EOF
 
 networks:
   default:
-    name: n8n-network # Define a specific network name (optional but good practice)
+    name: n8n-network # Define a specific network name (optional but good practice
 
 EOF
     
@@ -1443,7 +1443,7 @@ EOF
     print_success "Docker Compose file created with security enhancements"
     print_success "Encryption key saved to: $N8N_BASE_DIR/.n8n_encryption_key"
 
-    # --- Configure Cloudflared Service (skip if local mode) ---
+    # --- Configure Cloudflared Service (skip if local mode ---
     if [ "$CF_HOSTNAME" != "localhost" ]; then
         echo ">>> Configuring Cloudflared..."
         # Create directory if it doesn't exist
@@ -1467,7 +1467,7 @@ EOF
         # --- Check if Cloudflared service already exists ---
         if systemctl is-enabled cloudflared &> /dev/null 2>&1; then
             print_warning "  Cloudflared service  c ci t!"
-            local cf_status=$(systemctl is-active cloudflared 2>/dev/null || echo "unknown")
+            local cf_status=$(systemctl is-active cloudflared 2>/dev/null || echo "unknown"
             print_success "Cloudflared service status: $cf_status"
             
             if [ "$cf_status" != "active" ]; then
@@ -1543,15 +1543,15 @@ EOF
         echo ""
         echo "2 To DNS Record:"
         echo "    Type: CNAME"
-        echo "    Name: $(echo ${CF_HOSTNAME} | cut -d'.' -f1)"
+        echo "    Name: $(echo ${CF_HOSTNAME} | cut -d'.' -f1"
         echo "    Target: [tunnel-id].cfargotunnel.com"
-        echo "    Proxy: Proxied (mu cam)"
+        echo "    Proxy: Proxied (mu cam"
         echo ""
         echo "3 Cu hnh Public Hostname trong Tunnel:"
         echo "    Access  Tunnels  Chn tunnel"
         echo "    Public Hostname  Add a public hostname"
-        echo "    Subdomain: $(echo ${CF_HOSTNAME} | cut -d'.' -f1)"
-        echo "    Domain: $(echo ${CF_HOSTNAME} | cut -d'.' -f2-)"
+        echo "    Subdomain: $(echo ${CF_HOSTNAME} | cut -d'.' -f1"
+        echo "    Domain: $(echo ${CF_HOSTNAME} | cut -d'.' -f2-"
         echo "    Service: http://localhost:5678"
         echo ""
         echo " Hn g dn chi tit: Xem file CLOUDFLARE_DNS_SETUP.md"
@@ -1580,13 +1580,13 @@ EOF
     echo "--------------------------------------------------"
 }
 
-show_menu() {
+show_menu( {
     echo -e "${BLUE}================================================${NC}"
     echo -e "${BLUE}    N8N MANAGEMENT SCRIPT${NC}"
     echo -e "${BLUE}================================================${NC}"
     echo ""
     echo "Chon hanh dong:"
-    echo "1. Cai dat N8N moi (voi Cloudflare Tunnel)"
+    echo "1. Cai dat N8N moi - voi Cloudflare Tunnel"
     echo "2. Backup du lieu N8N"
     echo "3. Update N8N len phien ban moi nhat"
     echo "4. Backup + Update N8N"
@@ -1606,43 +1606,43 @@ show_menu() {
 # Nu c tham s dng lnh
 if [ $# -gt 0 ]; then
     case $1 in
-        "install")
+        "install"
             install_n8n
             ;;
-        "backup")
+        "backup"
             check_current_version
             show_server_status
             count_backups
             create_backup
             ;;
-        "update")
+        "update"
             check_current_version
             update_n8n
             ;;
-        "backup-update")
+        "backup-update"
             backup_and_update
             ;;
-        "status")
+        "status"
             check_current_version
             show_server_status
             count_backups
             ;;
-        "rollback")
+        "rollback"
             rollback_backup
             ;;
-        "cleanup")
+        "cleanup"
             cleanup_old_backups
             ;;
-        "config")
+        "config"
             manage_config
             ;;
-        "scan")
+        "scan"
             scan_installation
             ;;
-        "uninstall")
+        "uninstall"
             uninstall_n8n
             ;;
-        *)
+        *
             echo "S dng: $0 [install|backup|update|backup-update|status|rollback|cleanup|config|scan|uninstall]"
             echo ""
             echo "V d:"
@@ -1664,50 +1664,50 @@ else
     while true; do
         show_menu
         case $choice in
-            1)
+            1
                 install_n8n
                 ;;
-            2)
+            2
                 check_current_version
                 show_server_status
                 count_backups
                 create_backup
                 ;;
-            3)
+            3
                 check_current_version
                 update_n8n
                 ;;
-            4)
+            4
                 backup_and_update
                 ;;
-            5)
+            5
                 check_current_version
                 show_server_status
                 count_backups
                 ;;
-            6)
+            6
                 count_backups
                 ;;
-            7)
+            7
                 rollback_backup
                 ;;
-            8)
+            8
                 cleanup_old_backups
                 ;;
-            9)
+            9
                 manage_config
                 ;;
-            10)
+            10
                 scan_installation
                 ;;
-            11)
+            11
                 uninstall_n8n
                 ;;
-            0)
+            0
                 echo "Tm bit!"
                 exit 0
                 ;;
-            *)
+            *
                 print_error "La chn khng hp l!"
                 ;;
         esac
@@ -1718,3 +1718,4 @@ else
 fi
 
 exit 0
+
