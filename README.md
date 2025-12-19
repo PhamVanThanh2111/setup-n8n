@@ -159,10 +159,10 @@ sudo dnf install -y curl wget git
 
 ```bash
 # Tải script và cấp quyền thực thi
-wget https://raw.githubusercontent.com/ndoanh266/setup-n8n/main/n8n.sh && chmod +x n8n.sh
+wget -O n8n.sh "https://raw.githubusercontent.com/ndoanh266/setup-n8n/main/n8n.sh?$(date +%s)" && chmod +x n8n.sh
 
 # Hoặc dùng curl
-curl -O https://raw.githubusercontent.com/ndoanh266/setup-n8n/main/n8n.sh && chmod +x n8n.sh
+curl -sfLo n8n.sh "https://raw.githubusercontent.com/ndoanh266/setup-n8n/main/n8n.sh?$(date +%s)" && chmod +x n8n.sh
 
 # Chạy script
 sudo ./n8n.sh
@@ -582,3 +582,4 @@ Xem [CREDITS.md](CREDITS.md) để biết thêm chi tiết về:
 **Cảm ơn J2TEAM Community đã cho phép chia sẻ**
 
 > 🚀 **Script production-ready với 100% test coverage (11/11 functions) - Bắt đầu automation journey ngay hôm nay!**
+
